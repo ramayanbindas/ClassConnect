@@ -1,0 +1,39 @@
+# Style sheet for the sign-up/sing-in screen.
+
+# Variables
+#: set sign_up_form_font_color (0, 0, 0, 1)
+#: set sign_up_form_progressbar_height 0.1
+#: set sign_up_form_dropdown_height 0.6
+
+<AuthScreenTabletView>:
+	orientation: "horizontal"
+	padding: [root.width/2 - btn.width, 260, root.width/2 + btn.width, 260]
+	spacing: "10dp"
+	md_bg_color: app.theme_cls.accent_color
+
+	MDRaisedButton:
+		id: btn
+		text: "Sign In"
+		pos_hint: {"center_x": 0.5 - (self.width/2)/100, "center_y": 0.5}
+		theme_text_color: "Primary"
+		md_bg_color: app.theme_cls.primary_dark
+		font_style: "Button"
+		on_press: root.add_screen_to_parent(self.text)
+	
+	MDRaisedButton:
+		text: "Sign Up"
+		pos_hint: {"center_x": 0.5 + (self.width/2)/100, "center_y": 0.5}
+		theme_text_color: "Primary"
+		md_bg_color: app.theme_cls.primary_dark
+		font_style: "Button"
+		on_press: root.add_screen_to_parent(self.text)
+
+
+# ------------------------------------------------------------------------
+<SignUpScreenTabletView@MDScreen>:
+	padding: ["20dp", "80dp", "20dp", "80dp"]	
+
+	md_bg_color: app.theme_cls.accent_color
+
+	MDLabel:
+		text: "Sign Up Screen"
