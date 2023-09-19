@@ -31,8 +31,8 @@ class CreateAuth(Base):
                          *args, **kw)
 
         # Set-up all the different type of layouts for the Login Screen.
-        self.load_kv_file(["auth_screen_mobile", "auth_screen_tablet",
-                          "auth_screen_desktop"])
+        # self.load_kv_file(["auth_screen_mobile", "auth_screen_tablet",
+        #                   "auth_screen_desktop"])
 
         self.mobile_view = AuthScreenMobileView(master=self)
         self.tablet_view = AuthScreenDesktopView(master=self)

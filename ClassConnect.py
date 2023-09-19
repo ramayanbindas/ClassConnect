@@ -34,6 +34,7 @@ class AppScreenManager(MDScreenManager):
         
         # opening the start-up screen
         # self.current = "auth_screen"
+        # print(self.children)
 
     def add_screen(self, screen_object: object) -> None:
         """"""
@@ -49,6 +50,7 @@ class ClassConnectApp(MDApp):
         self.theme_cls.primary_hue = "900"
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.accent_hue = "200"
+
         return AppScreenManager()
 
 

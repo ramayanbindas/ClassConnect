@@ -1,19 +1,24 @@
 <AuthScreenMobileView>:
     orientation: "vertical"
-    padding: [60, 260, 60, 260]
+    #padding: [60, 200, 60, 260]
     spacing: "10dp"
+
+    md_bg_color: (1, 1, 0.5, 1)
 
     MDRaisedButton:
         text: "Sign In"
-        pos_hint: {"center_x": 0.5, "center_y": 0.5 - (self.height/2)/100}
+        pos_hint_y: None
+        y: root.top/2 - self.height/2
+        # pos_hint: {"center_x": 0.5, "center_y": 0.5}
         theme_text_color: "Primary"
         md_bg_color: app.theme_cls.primary_dark
         font_style: "Button"
-        on_press: root.master.create_screen(self.text)
+        on_press: print(root.top) 
+        # root.master.create_screen(self.text)
     
     MDRaisedButton:
         text: "Sign Up"
-        pos_hint: {"center_x": 0.5, "center_y": 0.5 + (self.height/2)/100}
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
         theme_text_color: "Primary"
         md_bg_color: app.theme_cls.primary_dark
         font_style: "Button"
