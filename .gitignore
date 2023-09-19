@@ -1,3 +1,4 @@
+component/__pycache__/
 *.txt
 test.py
 trash.py

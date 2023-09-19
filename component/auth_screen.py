@@ -67,6 +67,9 @@ class SignUpScreen(Base):
         self.tablet_view = SignUpScreenTabletView(master=self)
         self.desktop_view = SignUpScreenDesktopView(master=self)
 
+    def on_submit_info(self, instance: object):
+        print(instance.text)
+
 # class SignUpCommanMethods():
 #   def __init__(self):
 #       # store the information about the sign up.

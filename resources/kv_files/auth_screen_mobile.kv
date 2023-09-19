@@ -83,6 +83,7 @@
                 text: "Email :"
 
             CTextField:
+                on_text_validate: root.master.on_submit_info(self)
 
             CLabel:
                 text: "Password :"
