@@ -1,25 +1,26 @@
+#: import colors kivymd.color_definitions
+
 <AuthScreenMobileView>:
     orientation: "vertical"
-    #padding: [60, 200, 60, 260]
+    padding: [60, 200, 60, 200]
     spacing: "10dp"
 
     md_bg_color: (1, 1, 0.5, 1)
 
     MDRaisedButton:
         text: "Sign In"
-        pos_hint_y: None
-        y: root.top/2 - self.height/2
-        # pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        pos_hint: {"center_x": 0.5}
         theme_text_color: "Primary"
+        
         md_bg_color: app.theme_cls.primary_dark
         font_style: "Button"
-        on_press: print(root.top) 
-        # root.master.create_screen(self.text)
+        on_press: root.master.create_screen(self.text)
     
     MDRaisedButton:
         text: "Sign Up"
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        pos_hint: {"center_x": 0.5}
         theme_text_color: "Primary"
+        
         md_bg_color: app.theme_cls.primary_dark
         font_style: "Button"
         on_press: root.master.create_screen(self.text)
@@ -35,9 +36,15 @@
 <CLabel@MDLabel>:
     theme_text_color: "Custom"
     text_color: sign_up_form_font_color
+    size_hint: 0.5, 0.1
+
+    halign: "left"
 
 <CTextField@MDTextField>:
     required: True
+
+    size_hint: 0.8, 0.1
+    halign: "left"
 
 <CRaisedButton@MDRaisedButton>:
     size_hint_y: None
@@ -51,31 +58,26 @@
     # creating a form for the sign-up
     MDBoxLayout:
         orientation: "vertical"
+        radius: 10
 
         md_bg_color: app.theme_cls.accent_dark
-        radius: 10
-        
-        adaptive_height: True
 
         MDLabel:
             font_style: "Button"
             text: "Sign Up"
-            size_hint: None, None
-            size: "60dp", "40dp"
-            pos_hint: {"center_x": 0.5 - (self.width/2)/100}
-
-            md_bg_color: (1, 1, 1, 1)
+            halign: "center"
+            
+            size_hint_y: 0.2
+            pos_hint: {"center_x": 0.5, "y": 1}
 
         # adding form field
         MDGridLayout:
-            id: sign_up_form
-            rows: 5
+            rows: 8
             cols: 2
             padding: "2dp"
-            spacing: ["5dp", "20dp"]
+            spacing: ["5dp", "10dp"]
 
-            adaptive_height: True
-            row_default_height: "20dp"
+            row_default_height: "5dp"
 
             md_bg_color: (0.93, 0.89, 0.69, 1)
 
@@ -83,39 +85,77 @@
                 text: "Username :"
 
             CTextField:
+                id: username
+
+                helper_text: "*greater than 6 character."
+                helper_text_mode: "on_focus"
+                
+
+                on_focus: if not self.focus: root.master.check_input_validation(self, "username")
 
             CLabel:
                 text: "Email :"
 
             CTextField:
-                on_text_validate: root.master.on_submit_info(self)
+                id: email
+
+                helper_text: "*enter valid email"
+                helper_text_mode: "on_focus"
+
+                validator: "email"
+
+                on_focus: if not self.focus: root.master.check_input_validation(self, "email")
 
             CLabel:
+                id: password
                 text: "Password :"
 
             CTextField:
+                password: True
+                icon_left: "key-variant"
+
+                helper_text: "*password (A-Z)/(a-z)/(0-9)/@,!.."
+                helper_text_mode: "on_focus"
+
+                on_focus: if not self.focus: root.master.check_input_validation(self, "password")
 
             CLabel:
                 text: "Strong :"
+                size_hint_y: 0.0001
 
             MDProgressBar:
-                value: 50
-                size_hint_y: None
-                height: "5dp"
+                id: progressbar
+                size_hint_y: 0.0001
 
             CLabel:
                 text: "Profession :"
+                size_hint_y: 0.1
+
+            # TODO: Insteaded of using this try to use 
+            # MDDropdownTextItem
+            MDRectangleFlatIconButton:
+                id: prof_dropdown
+                text: "..."
+                size_hint: 1, 0.001
+
+                on_press: root.master.drop_down(self, "profession")
+
 
         MDBoxLayout:
             orientation: "horizontal"
-            size_hint_y: None
-            height: "60dp"
+            size_hint_y: 0.2
+            spacing: "10dp"
 
-            CheckBox:
+            MDCheckbox:
+                halign: "left"
+                size_hint_x: 0.2
             
             MDLabel:
                 text: "Term & Policy"
-
+            
             MDFillRoundFlatButton:
                 font_style: "Button"
                 text: "submit"
+
+                pos_hint: {"center_y": 0.5}
+

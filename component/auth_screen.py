@@ -6,9 +6,8 @@
     [CreateAuth, SignUpScreen, SignInScreen]
 '''
 
-from kivy.uix.dropdown import DropDown
-from kivy.uix.screenmanager import Screen
-from kivy.uix.button import Button
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.color_definitions import colors
 
 # import in-built module
 from .utils import Base
@@ -16,6 +15,8 @@ from .auth_screen_views import (AuthScreenMobileView, AuthScreenTabletView,
                                 AuthScreenDesktopView)
 from .auth_screen_views import (SignUpScreenMobileView, SignUpScreenTabletView,
                                 SignUpScreenDesktopView)
+
+from .settings import SPECIAL_CHAR, NUMBER, UPPER_CASE, LOWER_CASE
 
 # all screens
 AUTH_SCREEN = "auth_screen"
@@ -31,13 +32,13 @@ class CreateAuth(Base):
                          *args, **kw)
 
         # Set-up all the different type of layouts for the Login Screen.
-        # self.load_kv_file(["auth_screen_mobile", "auth_screen_tablet",
-        #                   "auth_screen_desktop"])
+        self.load_kv_file(["auth_screen_mobile", "auth_screen_tablet",
+                          "auth_screen_desktop"])
 
         self.mobile_view = AuthScreenMobileView(master=self)
         self.tablet_view = AuthScreenDesktopView(master=self)
         self.desktop_view = AuthScreenTabletView(master=self)
-    
+
     def create_screen(self, screen_name: str) -> None:
         """:method: create a screen with a given screen_name and
             add to the main screenmanager. This method is manily used
@@ -51,7 +52,7 @@ class CreateAuth(Base):
         elif screen_name.lower() == "sign up":
             print("sign up")
             SignUpScreen()  # create a sign in screen
-            self.screenmanager.current = SIGNUP_SCREEN
+            self.manager.current = SIGNUP_SCREEN
 
 
 # -------------------------- SIGNUPSCREEN-CLASS ------------------------
@@ -59,109 +60,159 @@ class CreateAuth(Base):
 
 class SignUpScreen(Base):
     """:about: class handles the sign in process for the application."""
+    USERNAME_MIN_LIMIT = 6
+
     def __init__(self, screenmanager: object = None, *args, **kwargs):
         super().__init__(SIGNUP_SCREEN, screenmanager, *args, **kwargs)
+
+        self.data = {"username": "", "email": "", "password": "", "profession": "",
+                     "course": "", "admission-data": "", "code": ""}
 
         # loading a customizable view
         self.mobile_view = SignUpScreenMobileView(master=self)
         self.tablet_view = SignUpScreenTabletView(master=self)
         self.desktop_view = SignUpScreenDesktopView(master=self)
 
-    def on_submit_info(self, instance: object):
-        print(instance.text)
+    # creating drop-down for the form
+    def drop_down(self, instance: object, text: str) -> None:
+        ''':method: is used in creating the drop-down menu items used for
+            selecting profession, courses, year-of-admission.
+           
+           :param instance: object of the caller of the drop down menu.
+           :param text: text should be amoung the data key, which value
+           could be loaded in the drop-down items list.
+        '''
+        data = {"profession": ["STUDENT", "TEACHER", "ADMIN"]}
 
-# class SignUpCommanMethods():
-#   def __init__(self):
-#       # store the information about the sign up.
-#       '''data = {"username": None, "email": None, "password": None, "profession": None,
-#       "code": None, "year": None, "course": None}'''
-#       self.data = {}
+        self.menu = MDDropdownMenu(caller=instance, position="center")
 
-#       # creating the profession drop down list
-#       self.dropdown = ProfessionDropDown()
-#       self.yeardropdown = YearDropDown()
-#       self.coursedropdown = CourseDropDown()
+        # creating a menu items list and set items to the instace after release
+        # event called in the instance widget.
+        # TODO: ITMES NOT SHOWN IN THE DROPDOWN MENU
+        menu_items = [
+            {
+              "text": x,
+              "md_bg_color": "#bdc6bo",
+              "on_release": lambda x: self.set_item_and_close_dropdown(instance, x)
+            } for x in data[text]]
 
-#       # track the binding status of dropdown, basically this boolen ensure that it showing
-#       # the appropriate selected text at with (widget) it attached.
-#       self.dropdown_is_bind = False
+        self.menu.items = menu_items
 
-#   def on_submit(self) -> None:
-#       """:method: """
-#       print(self.children)
+        self.menu.open()  # opening the dropdown menu here.
 
-#   def open_profession_drop_down(self, widget_object: object) -> None:
-#       """"""
-#       self.dropdown.open(widget_object)
+    def set_item_and_close_dropdown(self, instance: object, text: str) -> None:
+        '''
+        :method: use to set text to the caller or the dropdown, and also used
+        for closing the drop-down menu. This function is only used by the 
+        instance whom are used for creating drop-down menu.
 
-#       if not self.dropdown_is_bind:
-#           self.dropdown.bind(on_select= lambda instance, x: setattr(widget_object, "text", x))
-#           self.dropdown.bind(on_select= self.on_open_profession_drop_down)
-#           self.dropdown_is_bind = True
+        :param instance: caller instance of the drop-down menu
+        :param text: text which should be display over the caller instance.
+        '''
+        instance.text = text
+        # closing the drop-down instance when the value in selected for the
+        # drop-down list.
+        self.menu.dismiss()
+        print(self.menu)
 
-#   def on_open_profession_drop_down(self, widget_object: object, data: str) -> None:
-#       """"""
-#       selected_profession = data
-#       # attaching appropriate field according to the select profession
-#       if selected_profession == "STUDENT":
-#           # create a drop down for couse selection
-#           label1 = Label(text="Course :")
-#           btn1 = Button(text="select course")
-#           btn1.bind(on_press=self.coursedropdown.open)
-#           self.coursedropdown.bind(on_select= lambda instance, x: setattr(btn1, "text", x))
-            
-#           # create a drop down for year selection
-#           label2 = Label(text="Year")
-#           btn2 = Button(text="select admission year")
-#           btn2.bind(on_press=self.yeardropdown.open)
-#           self.yeardropdown.bind(on_select= lambda instance, x: setattr(btn2, "text", x))
+    def check_input_validation(self, instance: object, text: str) -> None:
+        '''
+        :method: takes care of TextField present in the sign-up form, it
+        contains logic, and also take care of visual responce accordingly.
 
-#           # adding the field to the sign_up_form
-#           self.ids.sign_up_form.add_widget(label1)
-#           self.ids.sign_up_form.add_widget(btn1)
-#           self.ids.sign_up_form.add_widget(label2)
-#           self.ids.sign_up_form.add_widget(btn2)
+        :param instance: of the TextInput object.
+        :param text: aviable of option ("username", "email", "password",
+        "profession", "course", "admission-year", "code"). In short the
+        key value of the `self.data` varaibel.
+        '''
+        
+        # TODO: FOCUS LEFT AND FOCUS NORMAL NOT WORKING PORPERLY.
+        # logic for accepting username
+        if text == "username":
+            if len(instance.text) < self.USERNAME_MIN_LIMIT:
+                instance.helper_text_color_focus = colors["Red"]["800"]
+                instance.helper_text_color_normal = colors["Red"]["800"]
+            else:
+                instance.helper_text_color_focus = colors['Green']['800']
+                instance.helper_text_color_normal = colors["Green"]["800"]
+                self.data[text] = instance.text
 
-#       elif selected_profession == "PROFESSOR":
-#           print("PROFESSOR")
-#       elif selected_profession == "ADMIN":
-#           print("ADMIN")
+        # logic for valid email
+        if text == "email":
+            if "@gmail.com" in instance.text and len(instance.text) > len("@gmail.com"):
+                self.data[text] = instance.text
+                print(instance.text)
 
-# class SignUpScreenMobileView(SignUpCommanMethods, MDBoxLayout):
-#   def __init__(self, *args, **kwargs):
-#       SignUpCommanMethods.__init__(self)
-#       MDBoxLayout.__init__(self, *args, **kwargs)
+        # TODO: MAKE IS MORE RESPONSIZE AND EFFECTIVE
+        # logic for valid password
+        if text == "password":
+            progressbar_id = self.current_view.ids.progressbar
+            if len(instance.text) > self.USERNAME_MIN_LIMIT:
+                # logic for filtering strong password.
+                progressbar_id.value = 10
 
-# class ProfessionDropDown(DropDown):
-#   pass
+                S = check_match_for_password("S", instance.text)
+                N = check_match_for_password("N", instance.text)
+                U = check_match_for_password("U", instance.text)
+                L = check_match_for_password("L", instance.text)
 
-# class YearDropDown(DropDown):
-#   """"""
-#   def __init__(self, *args, **kwargs):
-#       super().__init__(*args, **kwargs)
+                if S or N or U or L:
+                    progressbar_id.value = 20
+                    
+                    # combination of twos
+                    if (S and N) or (S and U) or (S and L) or (N and U) or \
+                       (N and L) or (U and L):
+                        progressbar_id.value = 60
+                    
+                    # combination of threes
+                    if (S and U and N) or (S and N and L) or (N and U and L)\
+                       or (S and U and L):
+                        progressbar_id.value = 80
 
-#       self.add_year(current_year=2023, highest_semister=8)
+                if S and N and U and L:  # cobination of four.
+                    progressbar_id.value = 100
 
-#   def add_year(self, current_year: int, highest_semister: int) -> None:
-#       """:param heighest_semester: height ongoing semester number (eg: 8) in the college for calculation
-#           total year should be present in the drop down list.
-#       """
-#       for i in range(0, highest_semister + 1):
-#           text = str(current_year - i)
-#           btn = Button(text=text, size_hint_y = None, height= dp(20))
-#           btn.bind(on_release = lambda instance: self.select(instance.text))
-#           self.add_widget(btn)
+                instance.helper_text_color_focus = (0, 0, 0, 1)
+                instance.helper_text_color_normal = (0, 0, 0, 1)
 
-# class CourseDropDown(DropDown):
-#   def __init__(self, *args, **kwargs):
-#       super().__init__(*args, **kwargs)
-#       self.courses = {"BSc. Comp (Hons.)", "Bsc. Math (Hons.)"}
+            else:
+                progressbar_id.value = 0
+                instance.helper_text_color_focus = colors["Red"]["800"]
+                instance.helper_text_color_normal = colors["Red"]["800"]
 
-#       self.add_course()
 
-#   def add_course(self):
-#       """"""
-#       for course in self.courses:
-#           btn = Button(text=course, size_hint_y = None, height= dp(20))
-#           btn.bind(on_release = lambda instance: self.select(instance.text))
-#           self.add_widget(btn)
+# TODO: MAKE THIS MATCHING FUNCTION ALGORITH MORE EFFICIENT
+# BASED OVER MEMORY AND PROCESSING TIME.
+def check_match_for_password(check: str, text: str) -> bool:
+    '''
+    :function: use for checking the strangth of the password.
+
+    :param check: options ("S", "N", "U", "L")
+            "S" for checking if special character persent it the text.
+            "N" for checking if nuber present in the text.
+            "U" for upper-case letter.
+            "L" for lower-case letter.
+    :param text: within which it perfore checks.
+
+    :return: True if those symbol are persent if not than False.
+    '''
+    if check == 'S':
+        for i in SPECIAL_CHAR:
+            if i in text:
+                return True
+    elif check == "N":
+        for i in NUMBER:
+            if i in text:
+                return True
+
+    elif check == "U":
+        for i in UPPER_CASE:
+            if i in text:
+                return True
+
+    elif check == "L":
+        for i in LOWER_CASE:
+            if i in text:
+                return True
+
+    return False

@@ -36,12 +36,13 @@ class AppScreenManager(MDScreenManager):
         # self.current = "auth_screen"
         # print(self.children)
 
-    def add_screen(self, screen_object: object) -> None:
-        """"""
-        self.add_widget(screen_object)
+    # def add_screen(self, screen_object: object) -> None:
+    #     """"""
+    #     self.add_widget(screen_object)
 
 
 class ClassConnectApp(MDApp):
+    
     def build(self):
         # self.theme_cls.theme_style_switch_animation = True
         # self.theme_cls.theme_style_switch_animation_duration = 0.8

@@ -14,8 +14,6 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.responsivelayout import MDResponsiveLayout
 from kivymd.uix.screenmanager import MDScreenManager
 
-from kivy.uix.screenmanager import ScreenManager
-from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
 from os.path import join
@@ -31,17 +29,19 @@ class Base(MDScreen, MDResponsiveLayout):
             Primary Screen). Over This Primary Screen you can add kivy-widgets.
             
             [Note: This Primary screen is automatically added to the given 
-            screen manager object if it passed during instancing this class 
-            else you have to do manually by calling the add_screen_to_parent 
-            takes the screen_object as argument.]
+            screen manager object if it not passed during instancing this class 
+            than you have to do manually add screen, by calling the 
+            :method set_manager:]
 
         Usage: This class is built because, to make easy to apply the
-            responsive layout widget to every class (conclusion: easy to handle
-            or create responsive layouts.) For using this class effectively:
-            You can instance this class in your own, created class where you
-            need a screen to be able to responsive. The class you create is
-            used for defining comman method or logic for your different layout.
-            Just you have to passed self object to that layouts.
+            responsive layout widget through entire application (conclusion: 
+            easy to handle or create responsive layouts.) For using this class 
+            effectively:
+            
+            You can instance this class in your own controller class,
+            which would be the communication medium between your logic
+            and the class which and defining in kv file and are now visible
+            in the screen. By this single class.
         
         i.e:
             from kivymd.app import MDApp
@@ -114,92 +114,85 @@ class Base(MDScreen, MDResponsiveLayout):
          kivymd.uix.responsivelayout.MDResponsiveLayout]
 
         :class: Base: cls_variables:
-            [screenmanager=None, [MobileView, TabletView, DesktopView] =
-            ObjectPropert()]
+            [screenmanager=None]
 
         :class: Base: cls_methods:
-            [`add_screen_to_parent`, `remove_screen_to_parent`, set_manager`,
-            `load_kv_files`]
+            [set_manager`, `load_kv_files`]
 
-        :class: Base: params: 
-            [name, screenmanager]
-        
-        Note: screenmanager of the class variable would be set during the
-        creating, a own class by assigning `ScreenManager (object)` to the
-        screenmanager attribute of the `Base Class` or by manually set `i.e
-        Base.screenmanager = ScreenManger`,
-
-        [It recommended to use one screenmanager to the whole application]
+        :class: Base: params: [name, screenmanager]
 
     '''
     __all__ = []  # Store all the instances created by this base class
     '''
-    Screenmanager Object used to be add this class. [# refer: :method
-    `add_screen_to_parent`]
+    :attr screenmanager: is a internal variable, used for storing the 
+    main screenmanager object(i.e: MDScreenManager). Which is used
+    for directly adding this screen object to the parent class without
+    assigning the parent screen object repeatedly to add this screen
+    object to it.
+    i.e Once the screen manager object it passes through one of its child class
+    it ready to add the other child over the same screen manager without
+    assigning the screen object repeatedly.
     '''
     screenmanager = None
-    
-    '''
-    Instance of the class(Kivy-Widget) which should be callable. Used the
-    instance to be added on this screen(inhareted from the MDScreen)
-    '''
-    # MobileView, TabletView, DesktopView = ObjectProperty(), ObjectProperty(),
-    # ObjectProperty()
 
     def __init__(self, name: str, screenmanager: object = None, *args, **kw):
         MDScreen.__init__(self, *args, **kw)
         MDResponsiveLayout.__init__(self, *args, **kw)
-        
+
         self.name = name  # name of the screen
+        '''
+        :attr current_view: store the view object which are
+        assign in (self.mobile_view/self.tablet_view/self.destop_view) objects.
+
+        Note:- This attribute should be used to fetch ids, available in the
+        current used view.
+        '''
+        self.current_view = None
+        self.bind(on_change_screen_type=self.set_current_view)
 
         # assigning value to the class variable
         Base.__all__.append(self)
-        if isinstance(screenmanager, MDScreenManager):
+        if screenmanager:
             Base.screenmanager = screenmanager
-        else:
-            Exception("Please Assign a `ScreenManager` object")
-
+        
         # fired internal methods
-        self.add_screen_to_parent(screen_object=self)
+        self.add_screen_to_parent()
 
     # Methods
-    def add_screen_to_parent(self, screen_object: object = None):
-        ''' :method: used to add the screen to the main screen manager of the
-                application.
-
-            :param screen_object: object of the screen which should be given,
-                to the screen object.
-                
-                [Note: The screen name is only added when the screenmanger
-                object is there and the screen manager dosn't hold this
-                screen name before.]
+    def add_screen_to_parent(self) -> None:
+        ''' :method: [internal method] used to add the screen to the main
+             screen manager of the application.
         '''
         if Base.screenmanager:
-            if screen_object not in Base.screenmanager.children:
-                if isinstance(screen_object, MDScreen):
-                    Base.screenmanager.add_widget(self)
-                else:
-                    Exception("`screen_object`: must be a Screen object")
-        else:
-            Exception("Please Assign a `ScreenManager` object first.")
+            Base.screenmanager.add_widget(self)
 
-    def remove_screen_to_parent(self, screen_object: object):
-        ''' :method: used to remove the screen to the parent(ScreenManager)
-            :param screen_object: object of the screen which should be removed.
+    def set_current_view(self, *args) -> None:
         '''
-        if Base.screenmanager:
-            Base.screenmanager.remove_widget(self)
-        else:
-            Exception("Please Assign a `ScreenManager` object first.")
+        :method: select among view (i.e mobile_view, tablet_view..) which
+        is currently being used according to the device and store that
+        view object is :attr self.current_view:
+        '''
+        if self.real_device_type == "mobile":
+            self.current_view = self.mobile_view
+        
+        elif self.real_device_type == "tablet":
+            self.current_view = self.mobile_view
+        
+        elif self.real_device_type == "desktop":
+            self.current_view = self.mobile_view
 
     @classmethod
     def set_manager(cls, screenmanager: object) -> None:
-        ''':classmethod: used to change the manager of the application.
-            :param screenmanager: ScreenManager object of the application.
-            Note: It is preferred to be used one manager in the application, if
-                application manager change than change it.
+        ''':classmethod: used to set the :cls_variable screenmanager:
+            to the given screenmanager object.
+
+            :param screenmanager: ScreenManager object i.e(MDScreenManager.)
+
+            Note: [After assigning the screen manager it automatically add
+            this screen to the given screen manager object.]
         '''
         cls.screenmanager = screenmanager
+        cls.add_screen_to_parent()  # adding this class to the give screenmanager.
 
     @staticmethod
     def load_kv_file(kv_file_name: list, kv_file_path: str = join(BASEFILEPATH,
@@ -212,14 +205,6 @@ class Base(MDScreen, MDResponsiveLayout):
         '''
         for name in kv_file_name:
             Builder.load_file(join(kv_file_path, name + ".kv"))
-
-    # Events
-    # def on_enter(self): # fired when the screen is called
-    #   self.mobile_view = self.MobileView
-    #   self.tablet_view = self.TabletView
-    #   self.desktop_view = self.DesktopView
-
-    #   print("fired", self.MobileView)
 
     # Magic Methods
     def __repr__(self):
