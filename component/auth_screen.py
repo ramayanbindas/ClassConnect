@@ -6,8 +6,13 @@
     [CreateAuth, SignUpScreen, SignInScreen]
 '''
 
-from kivymd.uix.menu import MDDropdownMenu
 from kivymd.color_definitions import colors
+from kivymd.uix.list.list import OneLineListItem
+
+from kivy.uix.dropdown import DropDown
+from kivy.factory import Factory
+
+from zxcvbn import zxcvbn
 
 # import in-built module
 from .utils import Base
@@ -15,13 +20,15 @@ from .auth_screen_views import (AuthScreenMobileView, AuthScreenTabletView,
                                 AuthScreenDesktopView)
 from .auth_screen_views import (SignUpScreenMobileView, SignUpScreenTabletView,
                                 SignUpScreenDesktopView)
-
-from .settings import SPECIAL_CHAR, NUMBER, UPPER_CASE, LOWER_CASE
+from .support import dump
 
 # all screens
 AUTH_SCREEN = "auth_screen"
 SIGNUP_SCREEN = "signup_screen"
 SIGNIN_SCREEN = "signin_screen"
+
+COURSES = ["BSc. Comp(H)", "Bsc. Math(H)"]
+YEAR_OF_ADDMISSION = ["2023-2024", "2022-2023"]
 
 # -------------------------- AUTHSCREEN-CLASS ------------------------
 
@@ -64,14 +71,38 @@ class SignUpScreen(Base):
 
     def __init__(self, screenmanager: object = None, *args, **kwargs):
         super().__init__(SIGNUP_SCREEN, screenmanager, *args, **kwargs)
-
-        self.data = {"username": "", "email": "", "password": "", "profession": "",
-                     "course": "", "admission-data": "", "code": ""}
-
+        
         # loading a customizable view
         self.mobile_view = SignUpScreenMobileView(master=self)
         self.tablet_view = SignUpScreenTabletView(master=self)
         self.desktop_view = SignUpScreenDesktopView(master=self)
+
+        '''
+        {"username": ["id", "value"], "email": ["id", "value]"],
+        "password": ["id", "value"], "roll": ["id", "value"],
+        "course": ["id", "value"], "admission-data": ["id", "value"],
+        "code": ["id", "value"]}
+        '''
+
+        self.data = {"username": [None, None],
+                     "email": [None, None], 
+                     "password": [None, None],
+                     "roll": [None, None],
+                     "courses": [None, None], 
+                     "year-of-admission": [None, None],
+                     "code": [None, None]}
+
+        self.dropdown = DropDown()
+        '''
+        Stote the instance which is currently controlling the dropdown
+        '''
+        self.dropdown_controll_widget = None
+        '''
+        Store the current key of the data used for the entry to the main
+        data
+        '''
+        self.current_dropdown_data_key = None
+        self.dropdown.bind(on_select=self.set_item_and_close_dropdown)
 
     # creating drop-down for the form
     def drop_down(self, instance: object, text: str) -> None:
@@ -82,23 +113,26 @@ class SignUpScreen(Base):
            :param text: text should be amoung the data key, which value
            could be loaded in the drop-down items list.
         '''
-        data = {"profession": ["STUDENT", "TEACHER", "ADMIN"]}
+        data = {"roll": ["Student", "Professor"], "courses": COURSES, 
+                "year-of-admission": YEAR_OF_ADDMISSION}
 
-        self.menu = MDDropdownMenu(caller=instance, position="center")
+        # clear widget if their is a widget in the dropdown
+        if self.dropdown.children:
+            self.dropdown.clear_widgets()
 
-        # creating a menu items list and set items to the instace after release
-        # event called in the instance widget.
-        # TODO: ITMES NOT SHOWN IN THE DROPDOWN MENU
-        menu_items = [
-            {
-              "text": x,
-              "md_bg_color": "#bdc6bo",
-              "on_release": lambda x: self.set_item_and_close_dropdown(instance, x)
-            } for x in data[text]]
-
-        self.menu.items = menu_items
-
-        self.menu.open()  # opening the dropdown menu here.
+        # creating a list for the dropdown
+        for item in data[text]:
+            widget = OneLineListItem(
+                text=item,
+                bg_color=(1, 1, 1, 1),
+                on_release=lambda x, item=item: self.dropdown.select(item)
+                )
+            self.dropdown.add_widget(widget)
+        
+        # attaching the dropdown with the instance
+        self.dropdown_controll_widget = instance
+        self.current_dropdown_data_key = text
+        self.dropdown.open(instance)
 
     def set_item_and_close_dropdown(self, instance: object, text: str) -> None:
         '''
@@ -106,14 +140,48 @@ class SignUpScreen(Base):
         for closing the drop-down menu. This function is only used by the 
         instance whom are used for creating drop-down menu.
 
-        :param instance: caller instance of the drop-down menu
+        :param instance: dropdown instance
         :param text: text which should be display over the caller instance.
         '''
-        instance.text = text
+
+        # clearing widgets from the parent class.
+        if self.dropdown_controll_widget:
+            self.dropdown_controll_widget.text = text
+
+            # entry to the data
+            self.data[self.current_dropdown_data_key] = \
+                     [self.dropdown_controll_widget, text]
+        
+        if text == "Student" or text == "Professor":
+            self.current_view.ids.roll_box.clear_widgets()
+        
         # closing the drop-down instance when the value in selected for the
         # drop-down list.
-        self.menu.dismiss()
-        print(self.menu)
+        instance.dismiss()
+
+        if text == "Student":
+            '''
+            Reset the professor data because user-had selected the student data
+            after typing the professor data
+            '''
+            if self.data["code"][1]:
+                self.data["code"] = [None, None]
+
+            student_roll = Factory.StudentRoll()
+            student_roll.master = self
+            self.current_view.ids.roll_box.add_widget(student_roll)
+        elif text == "Professor":
+            '''
+            Reset the student data because user-had selected the professor data
+            after typing the student data
+            '''
+            if self.data["courses"][1] or self.data["year-of-admission"][1]:
+                self.data["courses"] = self.data["year-of-admission"] = \
+                    [None, None]
+
+            professor_roll = Factory.ProfessorRoll()
+            professor_roll.master = self
+            self.current_view.ids.roll_box.add_widget(professor_roll)
 
     def check_input_validation(self, instance: object, text: str) -> None:
         '''
@@ -121,98 +189,143 @@ class SignUpScreen(Base):
         contains logic, and also take care of visual responce accordingly.
 
         :param instance: of the TextInput object.
-        :param text: aviable of option ("username", "email", "password",
-        "profession", "course", "admission-year", "code"). In short the
-        key value of the `self.data` varaibel.
+        :param text: aviable of option ("username", "email").
+        In short the key value of the `self.data` varaibel.
         '''
         
-        # TODO: FOCUS LEFT AND FOCUS NORMAL NOT WORKING PORPERLY.
-        # logic for accepting username
+        # entry to the data
         if text == "username":
-            if len(instance.text) < self.USERNAME_MIN_LIMIT:
-                instance.helper_text_color_focus = colors["Red"]["800"]
-                instance.helper_text_color_normal = colors["Red"]["800"]
+            if len(instance.text) > 2:
+                self.data["username"] = [instance, instance.text]
             else:
-                instance.helper_text_color_focus = colors['Green']['800']
-                instance.helper_text_color_normal = colors["Green"]["800"]
-                self.data[text] = instance.text
+                self.data["username"] = [instance, None]
 
         # logic for valid email
         if text == "email":
-            if "@gmail.com" in instance.text and len(instance.text) > len("@gmail.com"):
-                self.data[text] = instance.text
-                print(instance.text)
+            if "@gmail.com" in instance.text and \
+             len(instance.text) > len("@gmail.com"):
 
-        # TODO: MAKE IS MORE RESPONSIZE AND EFFECTIVE
-        # logic for valid password
-        if text == "password":
-            progressbar_id = self.current_view.ids.progressbar
-            if len(instance.text) > self.USERNAME_MIN_LIMIT:
-                # logic for filtering strong password.
-                progressbar_id.value = 10
-
-                S = check_match_for_password("S", instance.text)
-                N = check_match_for_password("N", instance.text)
-                U = check_match_for_password("U", instance.text)
-                L = check_match_for_password("L", instance.text)
-
-                if S or N or U or L:
-                    progressbar_id.value = 20
-                    
-                    # combination of twos
-                    if (S and N) or (S and U) or (S and L) or (N and U) or \
-                       (N and L) or (U and L):
-                        progressbar_id.value = 60
-                    
-                    # combination of threes
-                    if (S and U and N) or (S and N and L) or (N and U and L)\
-                       or (S and U and L):
-                        progressbar_id.value = 80
-
-                if S and N and U and L:  # cobination of four.
-                    progressbar_id.value = 100
-
-                instance.helper_text_color_focus = (0, 0, 0, 1)
-                instance.helper_text_color_normal = (0, 0, 0, 1)
-
+                self.data["email"] = [instance, instance.text]
             else:
-                progressbar_id.value = 0
-                instance.helper_text_color_focus = colors["Red"]["800"]
-                instance.helper_text_color_normal = colors["Red"]["800"]
+                self.data["email"] = [instance, None]
 
+        if text == "code":
+            if len(instance.text) > 2:
+                self.data["code"] = [instance, instance.text]
+            else:
+                self.data["code"] = [instance, None]
 
-# TODO: MAKE THIS MATCHING FUNCTION ALGORITH MORE EFFICIENT
-# BASED OVER MEMORY AND PROCESSING TIME.
-def check_match_for_password(check: str, text: str) -> bool:
-    '''
-    :function: use for checking the strangth of the password.
+    def check_password_strength(self, instance: object, text: str) -> None:
+        '''
+        :method: used for the checking the stength of the password beside
+        this also able to provide the suggestion for imporving password.
+        '''
+        if len(text) > 0:
+            result = zxcvbn(text, user_inputs=None)
+            '''
+            calculate the strength of the password, password strength between
+            (0-4)
+            '''
+            score = float(result["score"]/4)
+            self.current_view.ids.progressbar.value = score * 100
+            progressbar_color = (1 - score, score, 0, 1)
+            self.current_view.ids.progressbar.color = progressbar_color
 
-    :param check: options ("S", "N", "U", "L")
-            "S" for checking if special character persent it the text.
-            "N" for checking if nuber present in the text.
-            "U" for upper-case letter.
-            "L" for lower-case letter.
-    :param text: within which it perfore checks.
+            if score == 1.0:
+                # providing a suggestion for making the password strong
+                if result["feedback"]["warning"]:
+                    self.current_view.ids.password_suggestion.text = \
+                     str(result["feedback"]["warning"])
+                    self.current_view.ids.password_suggestion.text_color = \
+                        colors["Red"]["800"]
+                elif result["feedback"]["suggestions"]:
+                    self.current_view.ids.password_suggestion.text = \
+                        str(result["feedback"]["suggestions"][0])
+                    self.current_view.ids.password_suggestion.text_color = \
+                        (0.5, 0.5, 0, 1)
 
-    :return: True if those symbol are persent if not than False.
-    '''
-    if check == 'S':
-        for i in SPECIAL_CHAR:
-            if i in text:
-                return True
-    elif check == "N":
-        for i in NUMBER:
-            if i in text:
-                return True
+                self.data["password"] = [instance, instance.text]
+        else:
+            instance.color_text = colors["Red"]["900"]
+            self.current_view.ids.password_suggestion.text_color = \
+                colors["Red"]["800"]
+            self.current_view.ids.password_suggestion.text = """Password \
+            should greater than 8 contain (A-Z/a-z/0-9/@!..)"""
 
-    elif check == "U":
-        for i in UPPER_CASE:
-            if i in text:
-                return True
+            self.data["password"] = [instance, None]
 
-    elif check == "L":
-        for i in LOWER_CASE:
-            if i in text:
-                return True
+    def submit(self) -> None:
+        '''
+        :method: is the last step-to-conform the form would be submit in the
+        the surver or not. It makes sure all the entry field are fill with
+        appropriate text. If not it would inform-the user before submiting
+        the form.
+        '''
 
-    return False
+        # checking if any field is remain empty after pressing button
+        if self.data["username"][1]:
+            if self.data["email"][1]:
+                if self.data["password"][1]:
+                    if self.data["roll"][1]:
+
+                        # if student try to sign up
+                        if self.data["roll"][1] == "Student":
+                            if self.data["courses"][1]:
+                                if self.data["year-of-admission"][1]:
+                                    # move-to-next-level
+                                    dump("Test/data.txt",
+                                         value= self.create_submit_data(self.data))
+                                elif self.data["year-of-admission"][0]:
+                                    self.data["year-of-admission"][0].theme_text_color = \
+                                         colors["Red"]["900"]
+                            elif self.data["courses"][0]:
+                                self.data["courses"][0].theme_text_color = \
+                                 colors["Red"]["900"]
+                        
+                        # if professor trying to sign-up
+                        elif self.data["roll"][1] == "Professor":
+                            if self.data["code"][1]:
+                                # move-to-next-level
+                                dump("Test/data.txt", value=self.create_submit_data(
+                                    self.data))
+                            elif self.data["code"][0]:
+                                self.data["code"][0].theme_text_color = \
+                                     colors["Red"]["900"]
+                    
+                    elif self.data["roll"][0]:
+                        self.data["roll"][0].theme_text_color = colors["Red"]["900"]
+                elif self.data["password"][0]:
+                    self.data["password"][0].hint_text_color = colors["Red"]["900"]
+            elif self.data["email"][0]:
+                self.data["email"][0].hint_text_color = colors["Red"]["900"]
+        elif self.data["username"][0]:
+            self.data["username"][0].hint_text_color = colors["Red"]["900"]
+
+    def create_submit_data(self, data: dict) -> dict:
+        '''
+        :method: created a new data which would be read to save to the server,
+        because this method extract/elemenate all the object from the data.
+
+        :param data: a dict of a data that would be modified.
+
+        :return: a dict of new data which should be save over the server.
+        '''
+        data = {}
+        # TODO: FIND ERROR WHY THE DICT ITEM IS NOT REATURING ANY THINGS
+        print(data.items())
+
+        for key, value in data.items():
+            print(key, value)
+            data[key] = value[1]
+
+        return data
+
+    def view_term_and_policy(self, instance, value) -> None:
+        print(value)
+
+    # EVENT
+    # TODO: ADD THE CODE FOR CLOSING POP-UP
+    # LET SUPPOSE SOME ONE OPEN POP-UP BUT WITHOUT CLOSING IT THEY BACKED FROM
+    # THE GIVE SCREEN IN THAT SITUATION WE MENUALLY HAVE TO CLOSE THE POP-UP
+    def on_leave(self):
+        print("Leave")

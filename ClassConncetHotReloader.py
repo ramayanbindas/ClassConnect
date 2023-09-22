@@ -15,9 +15,12 @@ provide the file it automatically load the file/directory file.
 from kivymd.tools.hotreload.app import MDApp
 
 from kivy.factory import Factory
+from kivy.core.window import Window
 
 # import desire class
 from kivymd.uix.boxlayout import MDBoxLayout
+
+Window.size = (320, 620)
 
 
 class AuthScreenMobileView(MDBoxLayout):
@@ -28,11 +31,19 @@ class AuthScreenMobileView(MDBoxLayout):
     pass
 
 
+class SignUpScreenMobileView(MDBoxLayout):
+    '''
+    :class: name should be you entry point class name in kv file.
+    customize this class as your need.
+    '''
+    pass
+
+
 class ClassConnectHotReloaderApp(MDApp):
     # config hot reload
     DEBUG = True
-    KV_FILES = []
-    KV_DIRS = ["resources/kv_files"]
+    KV_FILES = ["resources/kv_files/auth_screen_mobile.kv"]
+    # KV_DIRS = ["resources/kv_files"]
     KV_AUTOREALODER_PATHS = [(".", {"recursive": True})]
     # KV_AUTOREALODER_IGNORE_PATTERS = ["**.pyc", "__pycache__"]
 
@@ -49,7 +60,7 @@ class ClassConnectHotReloaderApp(MDApp):
         self.theme_cls.accent_hue = "200"
 
         # return Factory.HotReloadEntryPoint(self.KV_FILES, 
-        #                                    AuthScreenMobileView)
+        #                                    SignUpScreenMobileView)
 
         return Factory.AppScreenManager()
   

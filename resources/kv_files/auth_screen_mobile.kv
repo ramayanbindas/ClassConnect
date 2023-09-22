@@ -1,4 +1,5 @@
-#: import colors kivymd.color_definitions
+# --------------------------AUTH SCREEN LAYOUT -------------------------
+
 
 <AuthScreenMobileView>:
     orientation: "vertical"
@@ -25,137 +26,210 @@
         font_style: "Button"
         on_press: root.master.create_screen(self.text)
     
-# -------------------------------------------------------------------------------------
-# Variables
+# --------------------------------SIGN-UP-SCREEN-LAYOUT------------------------------
+
+
+# Variables #
 #: set sign_up_form_font_color (0, 0, 0, 1)
 #: set sign_up_form_field_height "20dp"
 #: set sign_up_form_progressbar_height "20dp"
 #: set sign_up_form_dropdown_height "40dp"
 
-# comman class used in the sign-up-scree
-<CLabel@MDLabel>:
-    theme_text_color: "Custom"
-    text_color: sign_up_form_font_color
-    size_hint: 0.5, 0.1
 
-    halign: "left"
+# Custome Classes #
+# Custome Text Field ---------------
+
 
 <CTextField@MDTextField>:
-    required: True
+    mode: "fill"
 
-    size_hint: 0.8, 0.1
-    halign: "left"
 
-<CRaisedButton@MDRaisedButton>:
-    size_hint_y: None
-    height: "40dp"
+# Entry Field For Student Roll ------------
+<StudentRoll@MDBoxLayout>:
+    master: None
+    orientation: "horizontal"
+    spacing: "10dp"
 
-<SignUpScreenMobileView>:
-    padding: ["20dp", "80dp", "20dp", "80dp"]   
+    MDRectangleFlatIconButton:
+        id: course_dropdown
+        text: "Select Course"
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        size_hint_x: 1
+        on_release: root.master.drop_down(self, "courses")
+
+    MDRectangleFlatIconButton:
+        id: year_of_admission_dropdown
+        text: "Year of admission"
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        size_hint_x: 1
+        on_release: root.master.drop_down(self, "year-of-admission")
+
+
+# Entry-Field For selected Roll ---------
+<ProfessorRoll@CTextField>:
+    id: code
+    master: None
+    hint_text: "Code"
+    on_text: self.master.check_input_validation(self, "code")
+
+# Custom Password TextBox ---------------
+<CPasswordTextField@BoxLayout>
+    master: root.master
+
+    MDTextField:
+        id: password
+        password: True
+        icon_left: "key-variant"
+        mode: "rectangle"
+
+        hint_text: "Password"
+        on_text: print(root.master)
+
+    MDIconButton:
+        icon: "eye-off"
+        pos_hint_y: 0.5
+        pos_hint_x: password.width - self.width
+        theme_icon_color: "Custom"
+        icon_color: app.theme_cls.disabled_hint_text_color
+        on_release:
+            self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+            
+            password.password = False if password.password is True else True
+            
+            self.icon_color =  app.theme_cls.opposite_bg_dark if self.icon_color == app.theme_cls.disabled_hint_text_color else app.theme_cls.disabled_hint_text_color
+
+# SIGN-UP-SCREEN-MOBILE-VIEW-CLASS #
+
+
+<SignUpScreenMobileView@MDBoxLayout>:
+    padding: ["20dp", "60dp", "20dp", 0]
+    spacing: "10dp" 
+    orientation: "vertical"
 
     md_bg_color: app.theme_cls.primary_light
 
-    # creating a form for the sign-up
+    # name=signup header.
+    MDLabel:
+        font_style: "Button"
+        text: "Sign Up"
+        halign: "center"
+        md_bg_color: (1, 0.5, 0.5, 1)
+        
+        size_hint_y: 0.2
+
+    # container: entry field
     MDBoxLayout:
         orientation: "vertical"
-        radius: 10
+        spacing: "10dp"
 
-        md_bg_color: app.theme_cls.accent_dark
+        CTextField:
+            id: username
+            hint_text: "Username"
+            on_text: root.master.check_input_validation(self, "username")
 
-        MDLabel:
-            font_style: "Button"
-            text: "Sign Up"
-            halign: "center"
-            
-            size_hint_y: 0.2
-            pos_hint: {"center_x": 0.5, "y": 1}
+        CTextField:
+            id: email
+            hint_text: "Email"
+            on_text: root.master.check_input_validation(self, "email")
 
-        # adding form field
-        MDGridLayout:
-            rows: 8
-            cols: 2
-            padding: "2dp"
-            spacing: ["5dp", "10dp"]
+        MDRectangleFlatIconButton:
+            id: roll_dropdown
+            text: "Select your roll"
+            # md_bg_color: app.theme_cls.primary_color
 
-            row_default_height: "5dp"
+            size_hint_x: 1
+            on_release: root.master.drop_down(self, "roll")
 
-            md_bg_color: (0.93, 0.89, 0.69, 1)
-
-            CLabel:
-                text: "Username :"
-
-            CTextField:
-                id: username
-
-                helper_text: "*greater than 6 character."
-                helper_text_mode: "on_focus"
-                
-
-                on_focus: if not self.focus: root.master.check_input_validation(self, "username")
-
-            CLabel:
-                text: "Email :"
-
-            CTextField:
-                id: email
-
-                helper_text: "*enter valid email"
-                helper_text_mode: "on_focus"
-
-                validator: "email"
-
-                on_focus: if not self.focus: root.master.check_input_validation(self, "email")
-
-            CLabel:
-                id: password
-                text: "Password :"
-
-            CTextField:
-                password: True
-                icon_left: "key-variant"
-
-                helper_text: "*password (A-Z)/(a-z)/(0-9)/@,!.."
-                helper_text_mode: "on_focus"
-
-                on_focus: if not self.focus: root.master.check_input_validation(self, "password")
-
-            CLabel:
-                text: "Strong :"
-                size_hint_y: 0.0001
-
-            MDProgressBar:
-                id: progressbar
-                size_hint_y: 0.0001
-
-            CLabel:
-                text: "Profession :"
-                size_hint_y: 0.1
-
-            # TODO: Insteaded of using this try to use 
-            # MDDropdownTextItem
-            MDRectangleFlatIconButton:
-                id: prof_dropdown
-                text: "..."
-                size_hint: 1, 0.001
-
-                on_press: root.master.drop_down(self, "profession")
+        # container: act upon the based of choosen roll
+        MDBoxLayout:
+            id: roll_box
+            orientation: "horizontal"
+            spacing: "10dp"
 
 
         MDBoxLayout:
             orientation: "horizontal"
-            size_hint_y: 0.2
-            spacing: "10dp"
 
-            MDCheckbox:
-                halign: "left"
-                size_hint_x: 0.2
+            MDTextField:
+                id: password
+                password: True
+                icon_left: "key-variant"
+                mode: "rectangle"
+
+                hint_text: "Password"
+                on_text: root.master.check_password_strength(self, self.text)
+
+            MDIconButton:
+                icon: "eye-off"
+                pos_hint_y: 0.5
+                pos_hint_x: password.width - self.width
+                theme_icon_color: "Custom"
+                icon_color: app.theme_cls.disabled_hint_text_color
+                on_release:
+                    self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+                    
+                    password.password = False if password.password is True else True
+                    
+                    self.icon_color =  app.theme_cls.opposite_bg_dark if self.icon_color == app.theme_cls.disabled_hint_text_color else app.theme_cls.disabled_hint_text_color
+
+        MDProgressBar:
+            id: progressbar
+            size_hint_y: 0.1
+
+        # field for getting suggestions of password
+        MDLabel:
+            id: password_suggestion
+            halign: "left"
+            valign: "top"
+            theme_text_color: "Custom"
+            md_bg_color: app.theme_cls.primary_light
+
+            font_size: "14dp"
+            text_size: self.size
             
-            MDLabel:
-                text: "Term & Policy"
-            
-            MDFillRoundFlatButton:
-                font_style: "Button"
-                text: "submit"
+            size_hint_y: 0.7
 
-                pos_hint: {"center_y": 0.5}
 
+        MDFillRoundFlatButton:
+            id: sign_up
+            text: "Sign Up"
+            disabled: True
+            size_hint_x: 1
+
+            on_press: root.master.submit()
+
+    # container: Policy
+    MDBoxLayout:
+        orientation: "horizontal"
+        md_bg_color: (0.5, 0.5, 1, 1)
+
+        size_hint_y: 0.2
+
+        MDCheckbox:
+            size_hint_x: 0.2
+            md_bg_color: app.theme_cls.primary_light
+            on_state:
+                sign_up.disabled = False if sign_up.disabled else True
+
+        Label:
+            id: policy
+            text: "[ref=policy][u]AGREE WITH THE PRIVACY & POLICY[/u][/ref]"
+            markup: True
+
+            font_style: "Overline"
+            font_size: "12dp"
+            halign: "left"
+            bg_color: app.theme_cls.primary_light
+            size_hint: 1, 1
+            on_ref_press: root.master.view_term_and_policy
+    
+MDFlatButton:
+    id: policy
+    text: "Agree with the privacy & pocily"
+    
+    font_style: "Overline"
+    font_size: "12dp"
+    halign: "left"
+    
+    md_bg_color: app.theme_cls.primary_light
+    size_hint: 1, 1

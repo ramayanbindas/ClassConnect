@@ -5,7 +5,8 @@ type of function and classes.
 '''
 import json
 
-def dump(filename: str, mode: str = "w", value: json="") -> None:
+
+def dump(filename: str, mode: str = "w", value: dict="") -> None:
     ''':about: function used to create a specific file in the given
         path.
         :mode: dump function only write, append the data to file.
@@ -17,6 +18,7 @@ def dump(filename: str, mode: str = "w", value: json="") -> None:
             json.dump(value, f, indent=4)
     except:
         print("File not be modified or created")
+
 
 def load(filename: str, mode: str= "r") -> str:
     """:about: function used for reading the file and returs the containt,
