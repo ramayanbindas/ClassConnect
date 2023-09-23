@@ -41,7 +41,16 @@
 
 
 <CTextField@MDTextField>:
-    mode: "fill"
+    mode: "rectangle"
+    max_text_length: 50
+    halign: "left"
+    multiline: False
+    font_size: "16dp"
+    padding: "16dp"
+    # background_color: app.theme_cls.primary_light
+    line_anim: False
+    size_hint_y: 0.15
+    pos_hint_y: 1
 
 
 # Entry Field For Student Roll ------------
@@ -70,6 +79,7 @@
     id: code
     master: None
     hint_text: "Code"
+    size_hint_y: 0.8
     on_text: self.master.check_input_validation(self, "code")
 
 # Custom Password TextBox ---------------
@@ -103,12 +113,11 @@
 
 <SignUpScreenMobileView@MDBoxLayout>:
     padding: ["20dp", "60dp", "20dp", 0]
-    spacing: "10dp" 
     orientation: "vertical"
 
     md_bg_color: app.theme_cls.primary_light
 
-    # name=signup header.
+# name=signup header.
     MDLabel:
         font_style: "Button"
         text: "Sign Up"
@@ -120,81 +129,108 @@
     # container: entry field
     MDBoxLayout:
         orientation: "vertical"
-        spacing: "10dp"
+        spacing: "20dp"
 
-        CTextField:
-            id: username
-            hint_text: "Username"
-            on_text: root.master.check_input_validation(self, "username")
-
-        CTextField:
-            id: email
-            hint_text: "Email"
-            on_text: root.master.check_input_validation(self, "email")
-
-        MDRectangleFlatIconButton:
-            id: roll_dropdown
-            text: "Select your roll"
-            # md_bg_color: app.theme_cls.primary_color
-
-            size_hint_x: 1
-            on_release: root.master.drop_down(self, "roll")
-
-        # container: act upon the based of choosen roll
+    # container of the username & email
         MDBoxLayout:
-            id: roll_box
-            orientation: "horizontal"
+            orientation: "vertical"
             spacing: "10dp"
+            size_hint_y: 0.3
 
+            CTextField:
+                id: username
+                hint_text: "Username"
+                on_focus: self.required = True
 
+                on_text: root.master.check_input_validation(self, "username")
+
+            CTextField:
+                id: email
+                hint_text: "Email"
+                on_focus:
+                    self.validator = "email"
+                
+                on_text: root.master.check_input_validation(self, "email")
+
+    # container for the roll -------
         MDBoxLayout:
-            orientation: "horizontal"
+            orientation: "vertical"
+            size_hint_y: 0.3
+            spacing: "1dp"
 
-            MDTextField:
-                id: password
-                password: True
-                icon_left: "key-variant"
-                mode: "rectangle"
+            MDRectangleFlatIconButton:
+                id: roll_dropdown
+                text: "Select your roll"
+                size_hint_x: 1
+                size_hint_y: 0.2
 
-                hint_text: "Password"
-                on_text: root.master.check_password_strength(self, self.text)
+                on_release: root.master.drop_down(self, "roll")
 
-            MDIconButton:
-                icon: "eye-off"
-                pos_hint_y: 0.5
-                pos_hint_x: password.width - self.width
-                theme_icon_color: "Custom"
-                icon_color: app.theme_cls.disabled_hint_text_color
-                on_release:
-                    self.icon = "eye" if self.icon == "eye-off" else "eye-off"
-                    
-                    password.password = False if password.password is True else True
-                    
-                    self.icon_color =  app.theme_cls.opposite_bg_dark if self.icon_color == app.theme_cls.disabled_hint_text_color else app.theme_cls.disabled_hint_text_color
+            # container: act upon the based of choosen roll
+            MDBoxLayout:
+                id: roll_box
+                orientation: "horizontal"
+                spacing: "2dp"
+                size_hint_y: 0.8
 
-        MDProgressBar:
-            id: progressbar
-            size_hint_y: 0.1
+        # container for the password & progressbar & lable
+        MDBoxLayout:
+            size_hint_y: 0.2
+            orientation: "vertical"
+            spacing: "3dp"
 
-        # field for getting suggestions of password
-        MDLabel:
-            id: password_suggestion
-            halign: "left"
-            valign: "top"
-            theme_text_color: "Custom"
-            md_bg_color: app.theme_cls.primary_light
+        # container of the password & icon-widget
+            MDBoxLayout:
+                orientation: "horizontal"
+                pos_hint_y: 0.2
 
-            font_size: "14dp"
-            text_size: self.size
-            
-            size_hint_y: 0.7
+                MDTextField:
+                    id: password
+                    password: True
+                    icon_left: "key-variant"
+                    mode: "rectangle"
+                    pos_hint_y: 1
+
+                    hint_text: "Password"
+                    on_text: root.master.check_password_strength(self, self.text)
+
+                MDIconButton:
+                    icon: "eye-off"
+                    pos_hint_y: 1
+                    pos_hint_x: password.width - self.width
+                    theme_icon_color: "Custom"
+                    icon_color: app.theme_cls.disabled_hint_text_color
+                    on_release:
+                        self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+                        
+                        password.password = False if password.password is True else True
+                        
+                        self.icon_color =  app.theme_cls.opposite_bg_dark if self.icon_color == app.theme_cls.disabled_hint_text_color else app.theme_cls.disabled_hint_text_color
+
+            MDProgressBar:
+                id: progressbar
+                size_hint_y: 0.1
+
+            # field for getting suggestions of password
+            MDLabel:
+                id: password_suggestion
+                halign: "left"
+                valign: "top"
+                theme_text_color: "Custom"
+                md_bg_color: app.theme_cls.primary_light
+
+                font_size: "14dp"
+                text_size: self.size
+                
+                size_hint_y: 0.7
 
 
         MDFillRoundFlatButton:
             id: sign_up
             text: "Sign Up"
             disabled: True
-            size_hint_x: 1
+            size_hint: 1, 0.1
+            pos_hint_y: 0.5
 
             on_press: root.master.submit()
 
@@ -203,7 +239,7 @@
         orientation: "horizontal"
         md_bg_color: (0.5, 0.5, 1, 1)
 
-        size_hint_y: 0.2
+        size_hint_y: 0.1
 
         MDCheckbox:
             size_hint_x: 0.2

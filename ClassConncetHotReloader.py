@@ -47,8 +47,8 @@ class ClassConnectHotReloaderApp(MDApp):
     KV_AUTOREALODER_PATHS = [(".", {"recursive": True})]
     # KV_AUTOREALODER_IGNORE_PATTERS = ["**.pyc", "__pycache__"]
 
-    # CLASSES = {"HotReloadEntryPoint": "hotreloadentrypoint"}
-    CLASSES = {"AppScreenManager": "ClassConnect"}
+    CLASSES = {"HotReloadEntryPoint": "hotreloadentrypoint"}
+    # CLASSES = {"AppScreenManager": "ClassConnect"}
 
     def build_app(self, first=False): 
         # self.theme_cls.theme_style_switch_animation = True
@@ -59,10 +59,10 @@ class ClassConnectHotReloaderApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.accent_hue = "200"
 
-        # return Factory.HotReloadEntryPoint(self.KV_FILES, 
-        #                                    SignUpScreenMobileView)
+        return Factory.HotReloadEntryPoint(self.KV_FILES, 
+                                           SignUpScreenMobileView)
 
-        return Factory.AppScreenManager()
+        # return Factory.AppScreenManager()
   
 
 if __name__ == "__main__":

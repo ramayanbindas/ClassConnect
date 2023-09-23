@@ -18,9 +18,12 @@ from zxcvbn import zxcvbn
 from .utils import Base
 from .auth_screen_views import (AuthScreenMobileView, AuthScreenTabletView,
                                 AuthScreenDesktopView)
+
 from .auth_screen_views import (SignUpScreenMobileView, SignUpScreenTabletView,
                                 SignUpScreenDesktopView)
+
 from .support import dump
+from .settings import *
 
 # all screens
 AUTH_SCREEN = "auth_screen"
@@ -43,8 +46,8 @@ class CreateAuth(Base):
                           "auth_screen_desktop"])
 
         self.mobile_view = AuthScreenMobileView(master=self)
-        self.tablet_view = AuthScreenDesktopView(master=self)
-        self.desktop_view = AuthScreenTabletView(master=self)
+        self.tablet_view = AuthScreenTabletView(master=self)
+        self.desktop_view = AuthScreenDesktopView(master=self)
 
     def create_screen(self, screen_name: str) -> None:
         """:method: create a screen with a given screen_name and
@@ -78,19 +81,16 @@ class SignUpScreen(Base):
         self.desktop_view = SignUpScreenDesktopView(master=self)
 
         '''
-        {"username": ["id", "value"], "email": ["id", "value]"],
-        "password": ["id", "value"], "roll": ["id", "value"],
-        "course": ["id", "value"], "admission-data": ["id", "value"],
-        "code": ["id", "value"]}
+        {"name_of_field": value_of_the_field}
         '''
 
-        self.data = {"username": [None, None],
-                     "email": [None, None], 
-                     "password": [None, None],
-                     "roll": [None, None],
-                     "courses": [None, None], 
-                     "year-of-admission": [None, None],
-                     "code": [None, None]}
+        self.data = {"username": None,
+                     "email": None, 
+                     "password": None,
+                     "roll": None,
+                     "courses": None, 
+                     "year-of-admission": None,
+                     "code": None}
 
         self.dropdown = DropDown()
         '''
@@ -144,19 +144,25 @@ class SignUpScreen(Base):
         :param text: text which should be display over the caller instance.
         '''
 
-        # clearing widgets from the parent class.
+        '''
+        Add a text to the dropdown caller widget as any item is selected from
+        the the list
+        '''
         if self.dropdown_controll_widget:
             self.dropdown_controll_widget.text = text
 
-            # entry to the data
-            self.data[self.current_dropdown_data_key] = \
-                     [self.dropdown_controll_widget, text]
-        
+            # entry a text of item select in the data
+            self.data[self.current_dropdown_data_key] = text
+
+        '''
+        First check if the roll_box[MDBoxLayout] contains any child, then clear
+        and add a new selection of widgets according to the user-roll selected.
+        '''
         if text == "Student" or text == "Professor":
             self.current_view.ids.roll_box.clear_widgets()
         
-        # closing the drop-down instance when the value in selected for the
-        # drop-down list.
+        # closing the drop-down instance when the value in selected 
+        # from the drop-down list.
         instance.dismiss()
 
         if text == "Student":
@@ -164,10 +170,14 @@ class SignUpScreen(Base):
             Reset the professor data because user-had selected the student data
             after typing the professor data
             '''
-            if self.data["code"][1]:
-                self.data["code"] = [None, None]
+            if self.data["code"]:
+                self.data["code"] = None
 
             student_roll = Factory.StudentRoll()
+            '''
+            Assigning a screen instance [SignUpScreen] to the kv file class,
+            allowing them to access this class methods to call.
+            '''
             student_roll.master = self
             self.current_view.ids.roll_box.add_widget(student_roll)
         elif text == "Professor":
@@ -175,11 +185,14 @@ class SignUpScreen(Base):
             Reset the student data because user-had selected the professor data
             after typing the student data
             '''
-            if self.data["courses"][1] or self.data["year-of-admission"][1]:
-                self.data["courses"] = self.data["year-of-admission"] = \
-                    [None, None]
+            if self.data["courses"] or self.data["year-of-admission"]:
+                self.data["courses"] = self.data["year-of-admission"] = None
 
             professor_roll = Factory.ProfessorRoll()
+            '''
+            Assigning a screen instance [SignUpScreen] to the kv file class,
+            allowing them to access this class methods to call.
+            '''
             professor_roll.master = self
             self.current_view.ids.roll_box.add_widget(professor_roll)
 
@@ -196,63 +209,68 @@ class SignUpScreen(Base):
         # entry to the data
         if text == "username":
             if len(instance.text) > 2:
-                self.data["username"] = [instance, instance.text]
-            else:
-                self.data["username"] = [instance, None]
+                self.data["username"] = instance.text
 
         # logic for valid email
         if text == "email":
             if "@gmail.com" in instance.text and \
              len(instance.text) > len("@gmail.com"):
+                self.data["email"] = instance.text
 
-                self.data["email"] = [instance, instance.text]
-            else:
-                self.data["email"] = [instance, None]
-
+        # logic for the code type by the professor
         if text == "code":
-            if len(instance.text) > 2:
-                self.data["code"] = [instance, instance.text]
-            else:
-                self.data["code"] = [instance, None]
+            self.data["code"] = instance.text
 
     def check_password_strength(self, instance: object, text: str) -> None:
         '''
         :method: used for the checking the stength of the password beside
         this also able to provide the suggestion for imporving password.
         '''
-        if len(text) > 0:
+        # turning the password text color into red
+        self.current_view.ids.password.text_color_focus = colors["Red"]["900"]
+
+        if len(text):
             result = zxcvbn(text, user_inputs=None)
             '''
             calculate the strength of the password, password strength between
-            (0-4)
+            (0-1)
             '''
             score = float(result["score"]/4)
             self.current_view.ids.progressbar.value = score * 100
+            '''
+            progressbar color changes accroding to the score [RED-GREEN]
+            '''
             progressbar_color = (1 - score, score, 0, 1)
             self.current_view.ids.progressbar.color = progressbar_color
 
-            if score == 1.0:
-                # providing a suggestion for making the password strong
-                if result["feedback"]["warning"]:
-                    self.current_view.ids.password_suggestion.text = \
-                     str(result["feedback"]["warning"])
-                    self.current_view.ids.password_suggestion.text_color = \
-                        colors["Red"]["800"]
-                elif result["feedback"]["suggestions"]:
-                    self.current_view.ids.password_suggestion.text = \
-                        str(result["feedback"]["suggestions"][0])
-                    self.current_view.ids.password_suggestion.text_color = \
-                        (0.5, 0.5, 0, 1)
+            # providing a suggestion for making the password strong
+            if result["feedback"]["warning"]:
+                self.current_view.ids.password_suggestion.text = \
+                 str(result["feedback"]["warning"])
+                self.current_view.ids.password_suggestion.text_color = \
+                    colors["Red"]["800"]
+            
+            elif result["feedback"]["suggestions"]:
+                self.current_view.ids.password_suggestion.text = \
+                    str(result["feedback"]["suggestions"][0])
+                self.current_view.ids.password_suggestion.text_color = \
+                    (0.5, 0.5, 0, 1)
 
-                self.data["password"] = [instance, instance.text]
+            if score == 1.0:
+                # if the password have the higest score 1 then it would be accepted.
+                self.data["password"] = instance.text
+
+                # Reset the colors
+                self.current_view.ids.password.text_color_focus = colors["Green"]["900"]
+
         else:
-            instance.color_text = colors["Red"]["900"]
+            '''
+            If the length of text is zero then a message is show.
+            '''
             self.current_view.ids.password_suggestion.text_color = \
                 colors["Red"]["800"]
-            self.current_view.ids.password_suggestion.text = """Password \
-            should greater than 8 contain (A-Z/a-z/0-9/@!..)"""
-
-            self.data["password"] = [instance, None]
+            self.current_view.ids.password_suggestion.text = \
+                """Password should greater than 8 contain (A-Z/a-z/0-9/@!..)"""
 
     def submit(self) -> None:
         '''
@@ -261,64 +279,55 @@ class SignUpScreen(Base):
         appropriate text. If not it would inform-the user before submiting
         the form.
         '''
-
-        # checking if any field is remain empty after pressing button
-        if self.data["username"][1]:
-            if self.data["email"][1]:
-                if self.data["password"][1]:
-                    if self.data["roll"][1]:
-
-                        # if student try to sign up
-                        if self.data["roll"][1] == "Student":
-                            if self.data["courses"][1]:
-                                if self.data["year-of-admission"][1]:
-                                    # move-to-next-level
-                                    dump("Test/data.txt",
-                                         value= self.create_submit_data(self.data))
-                                elif self.data["year-of-admission"][0]:
-                                    self.data["year-of-admission"][0].theme_text_color = \
-                                         colors["Red"]["900"]
-                            elif self.data["courses"][0]:
-                                self.data["courses"][0].theme_text_color = \
-                                 colors["Red"]["900"]
-                        
-                        # if professor trying to sign-up
-                        elif self.data["roll"][1] == "Professor":
-                            if self.data["code"][1]:
-                                # move-to-next-level
-                                dump("Test/data.txt", value=self.create_submit_data(
-                                    self.data))
-                            elif self.data["code"][0]:
-                                self.data["code"][0].theme_text_color = \
-                                     colors["Red"]["900"]
-                    
-                    elif self.data["roll"][0]:
-                        self.data["roll"][0].theme_text_color = colors["Red"]["900"]
-                elif self.data["password"][0]:
-                    self.data["password"][0].hint_text_color = colors["Red"]["900"]
-            elif self.data["email"][0]:
-                self.data["email"][0].hint_text_color = colors["Red"]["900"]
-        elif self.data["username"][0]:
-            self.data["username"][0].hint_text_color = colors["Red"]["900"]
-
-    def create_submit_data(self, data: dict) -> dict:
         '''
-        :method: created a new data which would be read to save to the server,
-        because this method extract/elemenate all the object from the data.
-
-        :param data: a dict of a data that would be modified.
-
-        :return: a dict of new data which should be save over the server.
+        making sure that all the field are enter porperly, by a value and if 
+        not a pop up would be shown to user to fill the value. If yes we are
+        ready for the next step
         '''
-        data = {}
-        # TODO: FIND ERROR WHY THE DICT ITEM IS NOT REATURING ANY THINGS
-        print(data.items())
+        if self.conform_data(self.data):
+            # move to the next step
+            dump("Test/data.txt", mode="a", value=self.data)
+        else:
+            # show pop-up
+            print("Please fill all the field in the form!")
 
-        for key, value in data.items():
-            print(key, value)
-            data[key] = value[1]
+    def conform_data(self, data: dict) -> bool:
+        '''
+        :method: used to conform a data that all the value are correctly 
+        extracted from the the appication.
 
-        return data
+        :param dict: a dict of data where to check the value.
+
+        :return: True if the value are collected correctly else False
+        '''
+
+        # fileds
+        # {"username", "email", "password", "roll", "courses",
+        # "year-of-admission", "code"}
+
+        # rolls
+        # {"Student", "Professor"}
+
+        student_data_keys = {"username", "email", "password", "courses", "year-of-admission"}
+        professor_data_keys = {"username", "email", "password", "code"}
+
+        if data["roll"] == "Student":
+            # conform student data
+            for key in student_data_keys:
+                if not data[key]:
+                    return False
+
+            return True
+        
+        elif data["roll"] == "Professor":
+            # conform Professor data
+            for key in professor_data_keys:
+                if not data[key]:
+                    return False
+
+            return True
+
+        else: return False  # if either of them are not selected  # noqa: E701
 
     def view_term_and_policy(self, instance, value) -> None:
         print(value)
