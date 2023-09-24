@@ -16,7 +16,10 @@ ABOUT :module: Summary: Make the college time-table scheduling easy, by
 """
 from kivymd.app import MDApp
 from kivymd.uix.screenmanager import MDScreenManager
+
+from kivy.lang import Builder
 from kivy.core.window import Window
+from kivy import platform
 
 # import in-built-module
 from component.auth_screen import CreateAuth
@@ -25,23 +28,58 @@ Window.size = (320, 620)
 
 
 class AppScreenManager(MDScreenManager):
-    """"""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """
+    :class: is main screenmanager of the entire application, which holds
+    all the screen used in the applicaion.
+    """
+    def __init__(self, app_builder_obj: object = None, *args, **kw):
+        super().__init__(*args, **kw)
 
         # adding login screen
-        CreateAuth(screenmanager=self)
-        
-        # opening the start-up screen
-        # self.current = "auth_screen"
-        # print(self.children)
+        CreateAuth(screenmanager=self, app_builder_obj=app_builder_obj)
 
-    # def add_screen(self, screen_object: object) -> None:
-    #     """"""
-    #     self.add_widget(screen_object)
+        '''
+        Binding the keyboard inputs with the application.
+        '''
+        if self.is_desktop():
+            self._keyboard = Window.request_keyboard(self.keyboard_closed, self)
+            self._keyboard.bind(on_key_down=self.on_keyboard_down)
+            self._keyboard.bind(on_key_up=self.on_keyboard_up)
+
+    def is_desktop(self) -> bool:
+        ''':about: This method checks the current platform, in which platfrom the game is being runed.
+           :return: return True or False if the platform is comfortable to run the game.
+        '''
+        if platform in ("linux", "win", "mac"):
+            return True
+        
+        return False
+
+    def keyboard_closed(self):
+        '''
+        :method: fired when the the window keyboard is closed
+        '''
+        self._keyboard.unbind(on_key_down=self.on_keyboard_down)
+        self._keyboard = None
+
+    def on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        ''':about: method fired when any key on the keyboard is pressed.
+        '''
+        if keycode[0] == 1073742082:  # f11
+            self.current = self.next()
+        elif keycode[0] == 1073742083:  # f9
+            self.current = self.previous()
+
+    def on_keyboard_up(self, keyboard, keycode):
+        '''
+        :method: fired when any key on the keyboard realse 
+        '''
+        pass
 
 
 class ClassConnectApp(MDApp):
+    ''''''
+    KV_FILES = ["resources/kv_files/mobile_dialog.kv"]
     
     def build(self):
         # self.theme_cls.theme_style_switch_animation = True
@@ -52,7 +90,21 @@ class ClassConnectApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.accent_hue = "200"
 
-        return AppScreenManager()
+        return AppScreenManager(app_builder_obj=self)
+
+    def on_start(self):
+        '''
+        :method: is called when the application start. Do
+        all the stuff which should be initialize while starting
+        the application.
+        '''
+
+        '''
+        here we loading all the files mentions in the :class attr: KV_FILES, if
+        any file exist in the list.
+        '''
+        for file in self.KV_FILES:
+            Builder.load_file(file)
 
 
 if __name__ == '__main__':

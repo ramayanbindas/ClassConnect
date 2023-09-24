@@ -8,6 +8,7 @@
 
 from kivymd.color_definitions import colors
 from kivymd.uix.list.list import OneLineListItem
+from kivymd.uix.button import MDRaisedButton
 
 from kivy.uix.dropdown import DropDown
 from kivy.factory import Factory
@@ -15,31 +16,36 @@ from kivy.factory import Factory
 from zxcvbn import zxcvbn
 
 # import in-built module
-from .utils import Base
+from .utils import BaseScreen
 from .auth_screen_views import (AuthScreenMobileView, AuthScreenTabletView,
                                 AuthScreenDesktopView)
 
 from .auth_screen_views import (SignUpScreenMobileView, SignUpScreenTabletView,
                                 SignUpScreenDesktopView)
 
+from .auth_screen_views import (SignInScreenMobileView, SignInScreenTabletView,
+                                SignInScreenDesktopView)
+
 from .support import dump
-from .settings import *
 
-# all screens
-AUTH_SCREEN = "auth_screen"
-SIGNUP_SCREEN = "signup_screen"
-SIGNIN_SCREEN = "signin_screen"
 
-COURSES = ["BSc. Comp(H)", "Bsc. Math(H)"]
+# name of all the screen in the login process
+AUTH_SCREEN_NAME = "auth_screen"
+SIGNUP_SCREEN_NAME = "signup_screen"
+SIGNIN_SCREEN_NAME = "signin_screen"
+
+# variable for the sign-up-process.
+ROLL = ["Student", "Professor"]
+COURSES = ["BSc. Comp(H)", "BSc. Math(H)"]
 YEAR_OF_ADDMISSION = ["2023-2024", "2022-2023"]
+
 
 # -------------------------- AUTHSCREEN-CLASS ------------------------
 
 
-class CreateAuth(Base):
-    def __init__(self, screenmanager: object = None, *args, **kw):
-        super().__init__(name=AUTH_SCREEN, screenmanager=screenmanager,
-                         *args, **kw)
+class CreateAuth(BaseScreen):
+    def __init__(self, *args, **kw):
+        super().__init__(name=AUTH_SCREEN_NAME, *args, **kw)
 
         # Set-up all the different type of layouts for the Login Screen.
         self.load_kv_file(["auth_screen_mobile", "auth_screen_tablet",
@@ -51,38 +57,61 @@ class CreateAuth(Base):
 
     def create_screen(self, screen_name: str) -> None:
         """:method: create a screen with a given screen_name and
-            add to the main screenmanager. This method is manily used
+            add to the main screenmanager. This method is mainly used
             in response to the sign-up and sign-in button.
 
             :param screen_name: name of the screen.
         """
       
         if screen_name.lower() == "sign in":
-            print("sign in")
+            SignInScreen()
+            self.manager.current = SIGNIN_SCREEN_NAME
         elif screen_name.lower() == "sign up":
-            print("sign up")
             SignUpScreen()  # create a sign in screen
-            self.manager.current = SIGNUP_SCREEN
+            self.manager.current = SIGNUP_SCREEN_NAME
 
 
 # -------------------------- SIGNUPSCREEN-CLASS ------------------------
 
 
-class SignUpScreen(Base):
-    """:about: class handles the sign in process for the application."""
-    USERNAME_MIN_LIMIT = 6
-
-    def __init__(self, screenmanager: object = None, *args, **kwargs):
-        super().__init__(SIGNUP_SCREEN, screenmanager, *args, **kwargs)
+class SignUpScreen(BaseScreen):
+    """:about: class handles the sign in process, layout & logic
+       for the application.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(SIGNUP_SCREEN_NAME, *args, **kwargs)
         
         # loading a customizable view
         self.mobile_view = SignUpScreenMobileView(master=self)
         self.tablet_view = SignUpScreenTabletView(master=self)
         self.desktop_view = SignUpScreenDesktopView(master=self)
 
+        # creating data for the app
+        self.create_data()
+
+        self.dropdown = DropDown()
         '''
-        {"name_of_field": value_of_the_field}
+        Stote the instance which is currently controlling the dropdown
         '''
+        self.dropdown_controll_widget = None
+        '''
+        Store the current key of the data used to identify which dropdown
+        is used by the application and also used for entry key to data.
+        '''
+        self.current_dropdown_data_key = None
+        self.dropdown.bind(on_select=self.set_item_and_close_dropdown)
+
+    def create_data(self) -> None:
+        '''
+        :method: create a data which work for this function.
+            {"name_of_field": value_of_the_field}
+
+        :Note: This data may not be same with the server data.
+        '''
+        self.student_data_keys = {"username", "email", "password", "courses",
+                                  "year-of-admission"}
+
+        self.professor_data_keys = {"username", "email", "password", "code"}
 
         self.data = {"username": None,
                      "email": None, 
@@ -92,28 +121,16 @@ class SignUpScreen(Base):
                      "year-of-admission": None,
                      "code": None}
 
-        self.dropdown = DropDown()
-        '''
-        Stote the instance which is currently controlling the dropdown
-        '''
-        self.dropdown_controll_widget = None
-        '''
-        Store the current key of the data used for the entry to the main
-        data
-        '''
-        self.current_dropdown_data_key = None
-        self.dropdown.bind(on_select=self.set_item_and_close_dropdown)
-
     # creating drop-down for the form
     def drop_down(self, instance: object, text: str) -> None:
         ''':method: is used in creating the drop-down menu items used for
             selecting profession, courses, year-of-admission.
            
            :param instance: object of the caller of the drop down menu.
-           :param text: text should be amoung the data key, which value
+           :param text: text should be among the data key, which value
            could be loaded in the drop-down items list.
         '''
-        data = {"roll": ["Student", "Professor"], "courses": COURSES, 
+        data = {"roll": ROLL, "courses": COURSES, 
                 "year-of-admission": YEAR_OF_ADDMISSION}
 
         # clear widget if their is a widget in the dropdown
@@ -158,14 +175,14 @@ class SignUpScreen(Base):
         First check if the roll_box[MDBoxLayout] contains any child, then clear
         and add a new selection of widgets according to the user-roll selected.
         '''
-        if text == "Student" or text == "Professor":
+        if text in ROLL:
             self.current_view.ids.roll_box.clear_widgets()
         
         # closing the drop-down instance when the value in selected 
         # from the drop-down list.
         instance.dismiss()
 
-        if text == "Student":
+        if text == ROLL[0]:
             '''
             Reset the professor data because user-had selected the student data
             after typing the professor data
@@ -180,7 +197,7 @@ class SignUpScreen(Base):
             '''
             student_roll.master = self
             self.current_view.ids.roll_box.add_widget(student_roll)
-        elif text == "Professor":
+        elif text == ROLL[1]:
             '''
             Reset the student data because user-had selected the professor data
             after typing the student data
@@ -199,38 +216,55 @@ class SignUpScreen(Base):
     def check_input_validation(self, instance: object, text: str) -> None:
         '''
         :method: takes care of TextField present in the sign-up form, it
-        contains logic, and also take care of visual responce accordingly.
+        contains logic, and also take care of visual response accordingly.
 
         :param instance: of the TextInput object.
-        :param text: aviable of option ("username", "email").
-        In short the key value of the `self.data` varaibel.
+        :param text: available of option ("username", "email").
+        In short the key value of the `self.data` variable.
         '''
         
         # entry to the data
         if text == "username":
             if len(instance.text) > 2:
+                # we only accept the data if the condition meet
                 self.data["username"] = instance.text
+            else:
+                '''
+                always clear the data if data not meet our condition,
+                this is important because if the user type some-things
+                then erase it, we need to erase the data too
+                '''
+                self.data["username"] = None
 
         # logic for valid email
         if text == "email":
-            if "@gmail.com" in instance.text and \
-             len(instance.text) > len("@gmail.com"):
+            if not instance.error:
                 self.data["email"] = instance.text
+            else:
+                '''
+                always clear the data if data not meet our condition,
+                this is important because if the user type some-things
+                then erase it, we need to erase the data too
+                '''
+                self.data["email"] = None
 
         # logic for the code type by the professor
         if text == "code":
-            self.data["code"] = instance.text
+            if len(instance.text):
+                self.data["code"] = instance.text
+            else:
+                self.data["code"] = instance.text
 
     def check_password_strength(self, instance: object, text: str) -> None:
         '''
-        :method: used for the checking the stength of the password beside
-        this also able to provide the suggestion for imporving password.
+        :method: used for the checking the strength of the password beside
+        this also able to provide the suggestion for improving password.
         '''
         # turning the password text color into red
         self.current_view.ids.password.text_color_focus = colors["Red"]["900"]
 
         if len(text):
-            result = zxcvbn(text, user_inputs=None)
+            result = zxcvbn(text, user_inputs=self.data.values())
             '''
             calculate the strength of the password, password strength between
             (0-1)
@@ -275,59 +309,77 @@ class SignUpScreen(Base):
     def submit(self) -> None:
         '''
         :method: is the last step-to-conform the form would be submit in the
-        the surver or not. It makes sure all the entry field are fill with
-        appropriate text. If not it would inform-the user before submiting
+        the server or not. It makes sure all the entry field are fill with
+        appropriate text. If not it would inform-the user before submitting
         the form.
         '''
         '''
-        making sure that all the field are enter porperly, by a value and if 
+        making sure that all the field are enter properly, by a value and if 
         not a pop up would be shown to user to fill the value. If yes we are
         ready for the next step
         '''
         if self.conform_data(self.data):
             # move to the next step
-            dump("Test/data.txt", mode="a", value=self.data)
+            if self.data_submit_porcess(self.data):
+                '''
+                if the data is submit succesfully the application
+                data get reset it not able to subit the same data
+                again.
+                '''
+                self.create_data()
         else:
             # show pop-up
-            print("Please fill all the field in the form!")
+            btn = MDRaisedButton(text="OK")
+            alertdialog = Factory.AlertDialog(title="Unable To Sign Up!",
+                    text="Please fill all the field in the form.",
+                    buttons=[btn])
+
+            btn.bind(on_release=lambda instance: alertdialog.dismiss())
+            alertdialog.open()
 
     def conform_data(self, data: dict) -> bool:
         '''
         :method: used to conform a data that all the value are correctly 
-        extracted from the the appication.
+        extracted from the the application.
 
         :param dict: a dict of data where to check the value.
 
         :return: True if the value are collected correctly else False
         '''
 
-        # fileds
-        # {"username", "email", "password", "roll", "courses",
-        # "year-of-admission", "code"}
-
-        # rolls
-        # {"Student", "Professor"}
-
-        student_data_keys = {"username", "email", "password", "courses", "year-of-admission"}
-        professor_data_keys = {"username", "email", "password", "code"}
-
-        if data["roll"] == "Student":
+        if data["roll"] == ROLL[0]:
             # conform student data
-            for key in student_data_keys:
+            for key in self.student_data_keys:
                 if not data[key]:
                     return False
 
             return True
         
-        elif data["roll"] == "Professor":
+        elif data["roll"] == ROLL[1]:
             # conform Professor data
-            for key in professor_data_keys:
+            for key in self.professor_data_keys:
                 if not data[key]:
                     return False
 
             return True
 
         else: return False  # if either of them are not selected  # noqa: E701
+
+    def data_submit_porcess(self, data: dict) -> bool:
+        '''
+        :method: communicate with the server, and conform the data had
+        submit successfully or not.
+
+        :return: True if submit successful else False
+        '''
+        try:
+            dump("Test/data.txt", mode="a", value=data)
+        except Exception as error:
+            print(error)
+            # data not able to submit to the server
+            return False
+
+        return True
 
     def view_term_and_policy(self, instance, value) -> None:
         print(value)
@@ -337,4 +389,120 @@ class SignUpScreen(Base):
     # LET SUPPOSE SOME ONE OPEN POP-UP BUT WITHOUT CLOSING IT THEY BACKED FROM
     # THE GIVE SCREEN IN THAT SITUATION WE MENUALLY HAVE TO CLOSE THE POP-UP
     def on_leave(self):
-        print("Leave")
+        '''
+        :method: fired when the screen leave the current view.
+        '''
+        # closed the drop-down if it remains open
+        if self.dropdown_controll_widget:
+            self.dropdown_controll_widget.dismiss()
+
+        # removing the widget from the screen manager
+        self.manager.remove_widget(self)
+
+
+# -------------------------- SIGNINSCREEN-CLASS ------------------------
+
+
+class SignInScreen(BaseScreen):
+    def __init__(self, *args, **kw):
+        super().__init__(SIGNIN_SCREEN_NAME, *args, **kw)
+
+        # loading a customizable view
+        self.mobile_view = SignInScreenMobileView(master=self)
+        self.tablet_view = SignInScreenTabletView(master=self)
+        self.desktop_view = SignInScreenDesktopView(master=self)
+
+        # creating data for the sign-in
+        self.create_data()
+
+    def create_data(self) -> None:
+        '''
+        :method: used to create a acceptable/compatible data for the
+        class
+        '''
+
+        self.data = {"email": None, "password": None}
+
+    def check_input_validation(self, instance: object, text: str) -> None:
+        '''
+        :method: takes care of TextField present in the sign-up form, it
+        contains logic, and also take care of visual response accordingly.
+
+        :param instance: of the TextInput object.
+        :param text: available of option ("username", "email").
+        In short the key value of the `self.data` variable.
+        '''
+
+        # logic for valid email
+        if text == "email":
+            if not instance.error:
+                self.data["email"] = instance.text
+            else:
+                '''
+                always clear the data if data not meet our condition,
+                this is important because if the user type some-things
+                then erase it, we need to erase the data too
+                '''
+                self.data["email"] = None
+
+        # logic for the password type by the professor
+        if text == "password":
+            if len(instance.text):
+                self.data["password"] = instance.text
+            else:
+                self.data["password"] = instance.text
+
+    def submit(self) -> None:
+        '''
+        :method: is the last step-to-conform the form would be submit in the
+        the server or not. It makes sure all the entry field are fill with
+        appropriate text. If not it would inform-the user before submitting
+        the form.
+        '''
+        '''
+        making sure that all the field are enter properly, by a value and if 
+        not a pop up would be shown to user to fill the value. If yes we are
+        ready for the next step
+        '''
+
+        if self.conform_data(self.data):
+            # move-to-the next step
+            print(">>>>>>>>>Submit<<<<<<<<<")
+            '''
+            if the data is submit succesfully the application
+            data get reset it not able to subit the same data
+            again.
+            '''
+            self.create_data()
+        else:
+            # show the pop-up data submit rejected.
+            btn = MDRaisedButton(text="OK")
+            alertdialog = Factory.AlertDialog(title="Unable To Sign In!",
+                    text="Please fill all the field in the form.",
+                    buttons=[btn])
+
+            btn.bind(on_release=lambda instance: alertdialog.dismiss())
+            alertdialog.open()
+
+    def conform_data(self, data: dict) -> None:
+        '''
+        :method: used to conform a data that all the value are correctly 
+        extracted from the the application.
+
+        :param dict: a dict of data where to check the value.
+
+        :return: True if the value are collected correctly else False
+        '''
+        for value in data.values():
+            if not value:
+                return False
+
+        return True
+
+    def on_leave(self):
+        '''
+        :method: fired when the screen leave the current view.
+        '''
+
+        # removing the widget from the screen manager
+        self.manager.remove_widget(self)

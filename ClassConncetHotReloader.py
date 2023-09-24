@@ -31,7 +31,7 @@ class AuthScreenMobileView(MDBoxLayout):
     pass
 
 
-class SignUpScreenMobileView(MDBoxLayout):
+class SignInScreenMobileView(MDBoxLayout):
     '''
     :class: name should be you entry point class name in kv file.
     customize this class as your need.
@@ -42,13 +42,13 @@ class SignUpScreenMobileView(MDBoxLayout):
 class ClassConnectHotReloaderApp(MDApp):
     # config hot reload
     DEBUG = True
-    KV_FILES = ["resources/kv_files/auth_screen_mobile.kv"]
-    # KV_DIRS = ["resources/kv_files"]
+    # KV_FILES = ["resources/kv_files/auth_screen_mobile.kv"]
+    KV_DIRS = ["resources/kv_files"]
     KV_AUTOREALODER_PATHS = [(".", {"recursive": True})]
     # KV_AUTOREALODER_IGNORE_PATTERS = ["**.pyc", "__pycache__"]
 
-    CLASSES = {"HotReloadEntryPoint": "hotreloadentrypoint"}
-    # CLASSES = {"AppScreenManager": "ClassConnect"}
+    # CLASSES = {"HotReloadEntryPoint": "hotreloadentrypoint"}
+    CLASSES = {"AppScreenManager": "ClassConnect"}
 
     def build_app(self, first=False): 
         # self.theme_cls.theme_style_switch_animation = True
@@ -59,10 +59,10 @@ class ClassConnectHotReloaderApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.accent_hue = "200"
 
-        return Factory.HotReloadEntryPoint(self.KV_FILES, 
-                                           SignUpScreenMobileView)
+        # return Factory.HotReloadEntryPoint(self.KV_FILES, 
+        #                                    SignInScreenMobileView)
 
-        # return Factory.AppScreenManager()
+        return Factory.AppScreenManager()
   
 
 if __name__ == "__main__":

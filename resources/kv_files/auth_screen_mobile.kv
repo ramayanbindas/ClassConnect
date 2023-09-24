@@ -117,7 +117,7 @@
 
     md_bg_color: app.theme_cls.primary_light
 
-# name=signup header.
+    # name=signup header.
     MDLabel:
         font_style: "Button"
         text: "Sign Up"
@@ -131,7 +131,7 @@
         orientation: "vertical"
         spacing: "20dp"
 
-    # container of the username & email
+        # container of the username & email
         MDBoxLayout:
             orientation: "vertical"
             spacing: "10dp"
@@ -140,19 +140,18 @@
             CTextField:
                 id: username
                 hint_text: "Username"
-                on_focus: self.required = True
+                on_focus: if self.focus: self.required = True
 
                 on_text: root.master.check_input_validation(self, "username")
 
             CTextField:
                 id: email
                 hint_text: "Email"
-                on_focus:
-                    self.validator = "email"
+                on_focus: if self.focus: self.validator = "email"
                 
                 on_text: root.master.check_input_validation(self, "email")
 
-    # container for the roll -------
+        # container for the roll -------
         MDBoxLayout:
             orientation: "vertical"
             size_hint_y: 0.3
@@ -179,17 +178,17 @@
             orientation: "vertical"
             spacing: "3dp"
 
-        # container of the password & icon-widget
+            # container of the password & icon-widget
             MDBoxLayout:
                 orientation: "horizontal"
                 pos_hint_y: 0.2
 
-                MDTextField:
+                CTextField:
                     id: password
                     password: True
                     icon_left: "key-variant"
-                    mode: "rectangle"
                     pos_hint_y: 1
+                    max_text_length: 0
 
                     hint_text: "Password"
                     on_text: root.master.check_password_strength(self, self.text)
@@ -249,7 +248,7 @@
 
         Label:
             id: policy
-            text: "[ref=policy][u]AGREE WITH THE PRIVACY & POLICY[/u][/ref]"
+            text: "[u]AGREE WITH THE [color=ff3333][ref=privacy & policy]PRIVACY & POLICY[/ref][/u][/color]"
             markup: True
 
             font_style: "Overline"
@@ -257,15 +256,90 @@
             halign: "left"
             bg_color: app.theme_cls.primary_light
             size_hint: 1, 1
-            on_ref_press: root.master.view_term_and_policy
+            on_ref_press: root.master.view_term_and_policy(self, "https//:www.classconncet-privacy&policy.com")
     
-MDFlatButton:
-    id: policy
-    text: "Agree with the privacy & pocily"
-    
-    font_style: "Overline"
-    font_size: "12dp"
-    halign: "left"
-    
+
+
+# --------------------------------SIGN-IN-SCREEN-LAYOUT------------------------------
+
+<SignInScreenMobileView@MDBoxLayout>
+    orientation: "vertical"
+    padding: ["20dp", "150dp", "20dp", "150dp"]
+    spacing: "10dp"
     md_bg_color: app.theme_cls.primary_light
-    size_hint: 1, 1
+
+    # header of sign-in-screen
+    MDLabel:
+        text: "SIGN IN"
+        font_style: "Button"
+        halign: "center"
+        md_bg_color: (1, 0.5, 0.5, 1)
+        size_hint_y: 0.3
+
+    # container of email & password & label
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "10dp"
+        size_hint_y: 0.5
+
+        # class is define at the top fo the sign-up-screen class
+        CTextField:
+            hint_text: "Email"
+            pos_hint_y: 1
+            size_hint_y: 0.4
+
+            on_focus:
+                if self.focus: self.validator = "email"
+
+            on_text: root.master.check_input_validation(self, "email")
+
+        # container of the password & icon-widget
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: 0.4
+
+            CTextField:
+                id: password
+                password: True
+                icon_left: "key-variant"
+                pos_hint_y: 1
+                size_hint_y: 1
+                max_text_length: 0
+
+                hint_text: "Password"
+                on_focus: if self.focus: self.required=True
+
+                on_text: root.master.check_input_validation(self, "password")
+                
+            MDIconButton:
+                icon: "eye-off"
+                pos_hint_y: 1
+                pos_hint_x: password.width - self.width
+                theme_icon_color: "Custom"
+                icon_color: app.theme_cls.disabled_hint_text_color
+                on_release:
+                    self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+                    
+                    password.password = False if password.password is True else True
+                    
+                    self.icon_color =  app.theme_cls.opposite_bg_dark if self.icon_color == app.theme_cls.disabled_hint_text_color else app.theme_cls.disabled_hint_text_color
+
+        Label:
+            size_hint_y: 0.2
+            text: "Forgot [u][color=ff3333][ref=password]Password?[/ref][/u][/color]"
+            markup: True
+
+            font_style: "Overline"
+            font_size: "12dp"
+            halign: "left"
+            bg_color: app.theme_cls.primary_light
+
+    # Sign-In Button ---------
+    MDFillRoundFlatButton:
+        id: sign_up
+        text: "Sign In"
+        size_hint: 1, 0.1
+        pos_hint_y: 0.5
+
+        on_release: root.master.submit()
+

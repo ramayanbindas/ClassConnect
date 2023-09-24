@@ -7,12 +7,11 @@ to provide the above functionality to the child class as well as make help
 to keep the logic for all the layout same into a singe controller class.,
 
 :class:
-    [Base]
+    [BaseScreen]
 '''
 
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.responsivelayout import MDResponsiveLayout
-from kivymd.uix.screenmanager import MDScreenManager
 
 from kivy.lang import Builder
 
@@ -21,7 +20,7 @@ from os.path import join
 from .settings import BASEFILEPATH
 
 
-class Base(MDScreen, MDResponsiveLayout):
+class BaseScreen(MDScreen, MDResponsiveLayout):
     ''':class: is used with the screen manager(MDScreenManager/ScreenManger).
             This class in inherited from `MDScreen` and `MDResponsizeLayout`
             .For creating instance of this class you need to pass a screen name
@@ -50,7 +49,7 @@ class Base(MDScreen, MDResponsiveLayout):
 
             from kivy.lang import Builder
 
-            from component.utils import Base
+            from component.utils import BaseScreen
 
             Builder.load_string("""
             <CommanButton@MDRaisedButton>:
@@ -86,7 +85,7 @@ class Base(MDScreen, MDResponsiveLayout):
                     super().__init__(**kw)
                     self.master = master
 
-            class MyController(Base):
+            class MyController(BaseScreen):
                 def __init__(self, screenmanager, *args, **kw):
                     super().__init__("my_fist_screen", screenmanager)
 
@@ -113,16 +112,16 @@ class Base(MDScreen, MDResponsiveLayout):
         :inherited: [kivymd.uix.screen.MDScreen,
          kivymd.uix.responsivelayout.MDResponsiveLayout]
 
-        :class: Base: cls_variables:
+        :class: BaseScreen: cls_variables:
             [screenmanager=None]
 
-        :class: Base: cls_methods:
+        :class: BaseScreen: cls_methods:
             [set_manager`, `load_kv_files`]
 
-        :class: Base: params: [name, screenmanager]
+        :class: BaseScreen: params: [name, screenmanager]
 
     '''
-    __all__ = []  # Store all the instances created by this base class
+    __all__ = []  # Store all the instances created by this BaseScreen class
     '''
     :attr screenmanager: is a internal variable, used for storing the 
     main screenmanager object(i.e: MDScreenManager). Which is used
@@ -134,8 +133,13 @@ class Base(MDScreen, MDResponsiveLayout):
     assigning the screen object repeatedly.
     '''
     screenmanager = None
+    '''
+    :attr: store the object of the main builder of this entrie application.
+    '''
+    app_builder_obj = None
 
-    def __init__(self, name: str, screenmanager: object = None, *args, **kw):
+    def __init__(self, name: str, screenmanager: object = None,
+                 app_builder_obj: object = None, *args, **kw):
         MDScreen.__init__(self, *args, **kw)
         MDResponsiveLayout.__init__(self, *args, **kw)
 
@@ -151,9 +155,11 @@ class Base(MDScreen, MDResponsiveLayout):
         self.bind(on_change_screen_type=self.set_current_view)
 
         # assigning value to the class variable
-        Base.__all__.append(self)
+        BaseScreen.__all__.append(self)
         if screenmanager:
-            Base.screenmanager = screenmanager
+            BaseScreen.screenmanager = screenmanager
+        if app_builder_obj:
+            BaseScreen.app_builder_obj = app_builder_obj
         
         # fired internal methods
         self.add_screen_to_parent()
@@ -163,8 +169,8 @@ class Base(MDScreen, MDResponsiveLayout):
         ''' :method: [internal method] used to add the screen to the main
              screen manager of the application.
         '''
-        if Base.screenmanager:
-            Base.screenmanager.add_widget(self)
+        if BaseScreen.screenmanager:
+            BaseScreen.screenmanager.add_widget(self)
 
     def set_current_view(self, *args) -> None:
         '''
@@ -208,4 +214,4 @@ class Base(MDScreen, MDResponsiveLayout):
 
     # Magic Methods
     def __repr__(self):
-        return f"({self.__class__.__name__}: [{self.name}, {Base.screenmanager}])"  # noqa: E501
+        return f"({self.__class__.__name__}: [{self.name}, {BaseScreen.screenmanager}])"  # noqa: E501

@@ -62,3 +62,21 @@ class SignUpScreenDesktopView(MDBoxLayout):
         self.master = master
 
 # ------------------------ SIGN-IN-SCREEN-VIES------------------------------
+
+
+class SignInScreenMobileView(MDBoxLayout):
+    def __init__(self, master: object, *args, **kw):
+        super().__init__(*args, **kw)
+        self.master = master
+
+
+class SignInScreenTabletView(MDBoxLayout):
+    def __init__(self, master: object, *args, **kw):
+        super().__init__(*args, **kw)
+        self.master = master
+
+
+class SignInScreenDesktopView(MDBoxLayout):
+    def __init__(self, master: object, *args, **kw):
+        super().__init__(*args, **kw)
+        self.master = master
