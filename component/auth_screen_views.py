@@ -13,9 +13,6 @@ __all__ = ("AuthScreenMobileView", "AuthScreenTabletView",
 
 from kivymd.uix.boxlayout import MDBoxLayout
 
-from kivy.graphics.instructions import Canvas
-from kivy.graphics import Rectangle
-from kivy.graphics.context_instructions import Color
 
 # -----------------------------COMMAND-FUNCTION-----------------------
 

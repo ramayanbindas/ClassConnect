@@ -1,10 +1,10 @@
 __pycache__/
 Test/
 component/__pycache__/
-*.txt
 test.py
 trash.py
 kivymdfonts.py
 kivymdicons.py
 kivymdcolors.py
 Kivymd_responsivescreen_demo.py
+*.spec

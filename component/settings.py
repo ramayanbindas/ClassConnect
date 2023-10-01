@@ -10,5 +10,8 @@ from os.path import abspath
 # if the application runs over the window.
 BASEFILEPATH = abspath(__file__).removesuffix("\\component\\settings.py")
 
+# Applicaion variables
+ROLL = None
+
 # Application Colors #
 ERROR_COLOR = (1, 0, 0, 1)

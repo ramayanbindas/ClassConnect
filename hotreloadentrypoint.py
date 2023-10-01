@@ -4,7 +4,8 @@
 '''
 from kivymd.uix.screen import MDScreen
 
-from kivy.lang import Builder
+from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.tab.tab import MDTabsBase
 
 
 class HotReloadEntryPoint(MDScreen):
@@ -24,4 +25,9 @@ class HotReloadEntryPoint(MDScreen):
         if entry_point_class_name:
             self.add_widget(entry_point_class_name())
 
-        print(self.entry_point_class_name)
+        print("Class In HotReload: ", self.entry_point_class_name)
+
+
+class Tab(MDFloatLayout, MDTabsBase):
+    pass
+
